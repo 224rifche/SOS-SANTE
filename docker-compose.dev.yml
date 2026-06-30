@@ -1,0 +1,48 @@
+version: "3.9"
+
+# ==============================================================================
+# WON-MALLY - BASE DE DONNEES EN CONTENEUR (DEVELOPPEMENT LOCAL)
+# ==============================================================================
+# Usage : lance uniquement MySQL en conteneur Docker pendant que le Backend
+# Spring Boot tourne en local (IDE / mvn spring-boot:run), pour iterer vite
+# sans reconstruire l'image backend a chaque modification de code.
+#
+#   docker compose -f docker-compose.dev.yml up -d
+#
+# Le Backend (lance en local) doit alors pointer vers DB_HOST=localhost
+# (et non "mysql", qui n'est resolvable qu'a l'interieur du reseau Docker).
+# ==============================================================================
+
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: wonmally-mysql-dev
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-wonmally_db}
+      MYSQL_USER: ${DB_USERNAME:-wonmally}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-changeme}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-changeme_root}
+    ports:
+      - "3307:3306"  # Port hote 3307 (3306 souvent deja pris par un MySQL local sur Windows). Le conteneur ecoute toujours sur 3306 en interne.
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-changeme_root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # Interface web d'administration de la base (optionnelle, pratique en dev)
+  adminer:
+    image: adminer:4.8.1
+    container_name: wonmally-adminer-dev
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    ports:
+      - "8081:8080"
+
+volumes:
+  mysql_dev_data:

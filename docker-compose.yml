@@ -1,0 +1,152 @@
+version: "3.9"
+
+# ==============================================================================
+# WON-MALLY - INFRASTRUCTURE DOCKER COMPOSE
+# Reference : Phase 6 - Partie 9 (Architecture de Deploiement)
+# ==============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # Base de donnees
+  # ---------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: wonmally-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-wonmally_db}
+      MYSQL_USER: ${DB_USERNAME:-wonmally}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-changeme}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-changeme_root}
+    ports:
+      - "3307:3306"  # Port hote 3307 (3306 souvent deja pris par un MySQL local sur Windows). Le conteneur ecoute toujours sur 3306 en interne.
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - wonmally-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-changeme_root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ---------------------------------------------------------------------------
+  # Backend Spring Boot
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: wonmally-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-wonmally_db}
+      DB_USERNAME: ${DB_USERNAME:-wonmally}
+      DB_PASSWORD: ${DB_PASSWORD:-changeme}
+      JWT_SECRET: ${JWT_SECRET:?Veuillez definir JWT_SECRET dans le fichier .env}
+      JWT_ACCESS_EXPIRATION_MS: ${JWT_ACCESS_EXPIRATION_MS:-900000}
+      JWT_REFRESH_EXPIRATION_MS: ${JWT_REFRESH_EXPIRATION_MS:-604800000}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
+    networks:
+      - wonmally-net
+
+  # ---------------------------------------------------------------------------
+  # Frontend React (servi par Nginx, reverse proxy vers le backend)
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: wonmally-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - wonmally-net
+
+  # ---------------------------------------------------------------------------
+  # Observabilite - Stack LGM (Loki, Grafana, Mimir) + Beyla
+  # ---------------------------------------------------------------------------
+  loki:
+    image: grafana/loki:3.1.0
+    container_name: wonmally-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./observability/loki-config.yml:/etc/loki/local-config.yaml
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - wonmally-net
+
+  mimir:
+    image: grafana/mimir:2.13.0
+    container_name: wonmally-mimir
+    restart: unless-stopped
+    ports:
+      - "9009:9009"
+    volumes:
+      - ./observability/mimir-config.yml:/etc/mimir/config.yaml
+      - mimir_data:/data
+    command: -config.file=/etc/mimir/config.yaml
+    networks:
+      - wonmally-net
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: wonmally-grafana
+    restart: unless-stopped
+    depends_on:
+      - loki
+      - mimir
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-changeme}
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+    networks:
+      - wonmally-net
+
+  beyla:
+    image: grafana/beyla:1.8.0
+    container_name: wonmally-beyla
+    restart: unless-stopped
+    privileged: true
+    pid: "host"
+    environment:
+      BEYLA_OPEN_PORT: 8080
+      BEYLA_SERVICE_NAME: wonmally-backend
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://mimir:9009/otlp
+    depends_on:
+      - backend
+      - mimir
+    networks:
+      - wonmally-net
+
+networks:
+  wonmally-net:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  loki_data:
+  mimir_data:
+  grafana_data:

@@ -1,0 +1,59 @@
+# ==============================================================================
+# WON-MALLY - GITIGNORE
+# ==============================================================================
+
+# Fichiers systeme et OS
+.DS_Store
+Thumbs.db
+*.db
+
+# Fichiers d'environnement et secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+
+# Dossiers d'IDE et editeurs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+.settings/
+.classpath
+.project
+.factorypath
+*.iml
+.nb-gradle/
+
+# Dossiers de builds et dependances - Backend (Maven / Java)
+backend/target/
+backend/bin/
+backend/out/
+backend/*.jar
+backend/*.war
+backend/*.zip
+backend/*.tar.gz
+
+# Dossiers de builds et dependances - Frontend (Node / React)
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/out/
+frontend/.eslintcache
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# Logs et temporaires
+*.log
+logs/
+tmp/
+temp/

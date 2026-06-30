@@ -1,0 +1,94 @@
+:root {
+  /* Charte graphique - Phase 2 Partie 1 : Design System */
+  --color-red-emergency: #E53935;   /* Urgences, alertes critiques, bouton SOS */
+  --color-blue-primary: #1E88E5;    /* Navigation, menus, tableaux de bord */
+  --color-green-success: #43A047;   /* Validations, interventions reussies */
+  --color-orange-warning: #FB8C00;  /* Avertissements, alertes secondaires */
+  --color-text: #1A1A1A;
+  --color-bg: #FAFAFA;
+  --color-border: #E0E0E0;
+
+  --font-primary: "Poppins", sans-serif; /* Titres, menus, boutons */
+  --font-secondary: "Inter", sans-serif; /* Paragraphes, formulaires */
+
+  --radius: 8px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-secondary);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+h1, h2, h3, button {
+  font-family: var(--font-primary);
+}
+
+.auth-page, .sos-page {
+  max-width: 480px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+}
+
+form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+input, select, textarea {
+  padding: 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-family: var(--font-secondary);
+  font-size: 1rem;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.7rem 1.2rem;
+  background-color: var(--color-blue-primary);
+  color: white;
+  font-weight: 600;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.field-error {
+  color: var(--color-red-emergency);
+  font-size: 0.8rem;
+}
+
+/* Bouton SOS - element central de l'experience citoyen */
+.sos-button {
+  display: block;
+  width: 160px;
+  height: 160px;
+  margin: 1.5rem auto;
+  border-radius: 50%;
+  background-color: var(--color-red-emergency);
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(229, 57, 53, 0.4);
+  transition: transform 0.15s ease;
+}
+
+.sos-button:active {
+  transform: scale(0.96);
+}
+
+.sos-button--confirming {
+  background-color: var(--color-orange-warning);
+  font-size: 1.1rem;
+}
