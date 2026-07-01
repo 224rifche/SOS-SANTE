@@ -1,3 +1,4 @@
+import DoctorDashboard from '../pages/doctor/doctordashboard';
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 import LoginPage from "../pages/auth/LoginPage";
@@ -18,6 +19,8 @@ export default function AppRoutes() {
       <Route element={<ProtectedRoute allowedRoles={["MEDICAL_CENTER", "ADMIN"]} />}>
         <Route path="/medical-center" element={<div>Tableau de bord Centre Medical (a implementer)</div>} />
       </Route>
+
+      <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
 
       <Route element={<ProtectedRoute allowedRoles={["AMBULANCIER", "ADMIN"]} />}>
         <Route path="/ambulancier" element={<div>Tableau de bord Ambulancier (a implementer)</div>} />
