@@ -53,6 +53,13 @@ public class User extends BaseEntity {
     @Builder.Default
     private Boolean verified = false;
 
+    @Column(name = "failed_login_attempts", nullable = false)
+    @Builder.Default
+    private Integer failedLoginAttempts = 0;
+
+    @Column(name = "locked_until")
+    private LocalDateTime lockedUntil;
+
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
