@@ -1,10 +1,13 @@
 package com.wonmally.app.exception;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -15,8 +18,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Gestion centralisee des exceptions. Aucune information technique sensible
- * n'est jamais transmise au client (conforme a la Politique de Securite).
+ * Gestionnaire centralisé des exceptions.
+ *
+ * Principe de sécurité : aucune information technique interne (stack trace,
+ * nom de classe, requête SQL) n'est transmise au client.
+ * Les messages sont volontairement génériques sauf quand la précision
+ * est utile pour l'expérience utilisateur (ex : compte verrouillé).
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -31,6 +38,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage(), req, null);
     }
 
+    @ExceptionHandler(AccountLockedException.class)
+    public ResponseEntity<ErrorResponse> handleAccountLocked(AccountLockedException ex, HttpServletRequest req) {
+        return build(HttpStatus.LOCKED, ex.getMessage(), req, null);
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex, HttpServletRequest req) {
         return build(HttpStatus.UNAUTHORIZED, "Email ou mot de passe incorrect.", req, null);
@@ -38,7 +50,19 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, HttpServletRequest req) {
-        return build(HttpStatus.FORBIDDEN, "Acces refuse.", req, null);
+        return build(HttpStatus.FORBIDDEN, "Accès refusé.", req, null);
+    }
+
+    // Exceptions JWT interceptées ici si elles remontent au-delà du filtre
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<ErrorResponse> handleExpiredJwt(ExpiredJwtException ex, HttpServletRequest req) {
+        return build(HttpStatus.UNAUTHORIZED,
+            "Token expiré. Utilisez le refresh token pour renouveler votre session.", req, null);
+    }
+
+    @ExceptionHandler({SignatureException.class, MalformedJwtException.class})
+    public ResponseEntity<ErrorResponse> handleInvalidJwt(RuntimeException ex, HttpServletRequest req) {
+        return build(HttpStatus.UNAUTHORIZED, "Token invalide.", req, null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -47,7 +71,7 @@ public class GlobalExceptionHandler {
         for (FieldError error : ex.getBindingResult().getFieldErrors()) {
             errors.put(error.getField(), error.getDefaultMessage());
         }
-        return build(HttpStatus.BAD_REQUEST, "Erreur de validation des donnees.", req, errors);
+        return build(HttpStatus.BAD_REQUEST, "Erreur de validation des données.", req, errors);
     }
 
     @ExceptionHandler(Exception.class)
@@ -55,7 +79,9 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Une erreur interne est survenue.", req, null);
     }
 
-    private ResponseEntity<ErrorResponse> build(HttpStatus status, String message, HttpServletRequest req, Map<String, String> validationErrors) {
+    private ResponseEntity<ErrorResponse> build(HttpStatus status, String message,
+                                                 HttpServletRequest req,
+                                                 Map<String, String> validationErrors) {
         ErrorResponse error = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(status.value())
