@@ -17,14 +17,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Gestionnaire centralisé des exceptions.
- *
- * Principe de sécurité : aucune information technique interne (stack trace,
- * nom de classe, requête SQL) n'est transmise au client.
- * Les messages sont volontairement génériques sauf quand la précision
- * est utile pour l'expérience utilisateur (ex : compte verrouillé).
- */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -36,6 +28,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex, HttpServletRequest req) {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage(), req, null);
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleEmailAlreadyExists(EmailAlreadyExistsException ex, HttpServletRequest req) {
+        return build(HttpStatus.CONFLICT, ex.getMessage(), req, null);
     }
 
     @ExceptionHandler(AccountLockedException.class)
@@ -50,14 +47,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, HttpServletRequest req) {
-        return build(HttpStatus.FORBIDDEN, "Accès refusé.", req, null);
+        return build(HttpStatus.FORBIDDEN, "Acces refuse.", req, null);
     }
 
-    // Exceptions JWT interceptées ici si elles remontent au-delà du filtre
     @ExceptionHandler(ExpiredJwtException.class)
     public ResponseEntity<ErrorResponse> handleExpiredJwt(ExpiredJwtException ex, HttpServletRequest req) {
         return build(HttpStatus.UNAUTHORIZED,
-            "Token expiré. Utilisez le refresh token pour renouveler votre session.", req, null);
+            "Token expire. Utilisez le refresh token pour renouveler votre session.", req, null);
     }
 
     @ExceptionHandler({SignatureException.class, MalformedJwtException.class})
@@ -71,7 +67,7 @@ public class GlobalExceptionHandler {
         for (FieldError error : ex.getBindingResult().getFieldErrors()) {
             errors.put(error.getField(), error.getDefaultMessage());
         }
-        return build(HttpStatus.BAD_REQUEST, "Erreur de validation des données.", req, errors);
+        return build(HttpStatus.BAD_REQUEST, "Erreur de validation des donnees.", req, errors);
     }
 
     @ExceptionHandler(Exception.class)
