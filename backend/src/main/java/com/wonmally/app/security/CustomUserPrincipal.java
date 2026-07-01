@@ -20,6 +20,8 @@ public class CustomUserPrincipal implements UserDetails {
     private final String email;
     private final String password;
     private final boolean enabled;
+    private final String firstName;
+    private final String lastName;
     private final Collection<? extends GrantedAuthority> authorities;
 
     public CustomUserPrincipal(User user) {
@@ -27,6 +29,8 @@ public class CustomUserPrincipal implements UserDetails {
         this.email = user.getEmail();
         this.password = user.getPassword();
         this.enabled = Boolean.TRUE.equals(user.getEnabled());
+        this.firstName = user.getFirstName();
+        this.lastName = user.getLastName();
         this.authorities = user.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
                 .toList();

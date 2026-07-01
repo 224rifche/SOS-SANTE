@@ -11,6 +11,7 @@ import com.wonmally.app.intervention.dto.InterventionStatusUpdateRequest;
 import com.wonmally.app.intervention.entity.Intervention;
 import com.wonmally.app.intervention.repository.InterventionRepository;
 import com.wonmally.app.websocket.AlertWebSocketService;
+import com.wonmally.app.ambulancier.repository.AmbulancierRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.Optional;
 
 /**
  * Service metier du module Intervention - implemente la machine a etats
@@ -35,6 +37,7 @@ public class InterventionService {
     private final AmbulanceRepository ambulanceRepository;
     private final DoctorRepository doctorRepository;
     private final AlertWebSocketService webSocketService;
+    private final AmbulancierRepository ambulancierRepository;
 
     /** Transitions autorisees de la machine a etats officielle du MVP. */
     private static final Map<InterventionStatus, Set<InterventionStatus>> ALLOWED_TRANSITIONS = new EnumMap<>(InterventionStatus.class);
@@ -107,5 +110,19 @@ public class InterventionService {
             throw new BadRequestException(
                     "Transition de statut invalide : " + current + " -> " + target);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Intervention> getActiveInterventionForUser(UUID userId) {
+        var ambulancierOpt = ambulancierRepository.findByUserId(userId);
+        if (ambulancierOpt.isEmpty()) {
+            return Optional.empty();
+        }
+        var ambulancier = ambulancierOpt.get();
+        return interventionRepository.findAll().stream()
+                .filter(i -> i.getCompletedAt() == null && !Boolean.TRUE.equals(i.getArchived())
+                        && i.getMedicalCenter().getId().equals(ambulancier.getMedicalCenter().getId())
+                        && i.getAmbulance() != null)
+                .findFirst();
     }
 }

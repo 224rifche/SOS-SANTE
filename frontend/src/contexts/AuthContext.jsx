@@ -9,7 +9,10 @@ function decodeUserFromToken(token) {
   try {
     const payload = jwtDecode(token);
     return {
+      id: payload.userId,
       email: payload.sub,
+      firstName: payload.firstName,
+      lastName: payload.lastName,
       roles: (payload.authorities || payload.roles || []).map((r) =>
         typeof r === "string" ? r.replace("ROLE_", "") : r
       ),

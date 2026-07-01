@@ -19,6 +19,12 @@ public class InterventionController {
 
     private final InterventionService interventionService;
 
+    @GetMapping("/active")
+    public ResponseEntity<Intervention> getActiveIntervention(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.wonmally.app.security.CustomUserPrincipal principal) {
+        return ResponseEntity.of(interventionService.getActiveInterventionForUser(principal.getUserId()));
+    }
+
     @PatchMapping("/{id}/status")
     public ResponseEntity<Intervention> updateStatus(
             @PathVariable UUID id,

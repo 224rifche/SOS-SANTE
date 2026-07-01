@@ -32,7 +32,16 @@ public class JwtService {
     }
 
     public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("roles", userDetails.getAuthorities().stream()
+                .map(org.springframework.security.core.GrantedAuthority::getAuthority)
+                .toList());
+        if (userDetails instanceof CustomUserPrincipal principal) {
+            extraClaims.put("userId", principal.getUserId().toString());
+            extraClaims.put("firstName", principal.getFirstName());
+            extraClaims.put("lastName", principal.getLastName());
+        }
+        return generateToken(extraClaims, userDetails);
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
