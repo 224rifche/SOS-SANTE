@@ -10,4 +10,5 @@ import java.util.UUID;
 public interface AlertRepository extends JpaRepository<Alert, UUID> {
     List<Alert> findByCitizenIdOrderByCreatedAtDesc(UUID citizenId);
     List<Alert> findByStatusOrderByCreatedAtAsc(InterventionStatus status);
+    boolean existsByCategoryId(Long categoryId);
 }
