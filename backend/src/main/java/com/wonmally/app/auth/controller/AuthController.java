@@ -2,7 +2,10 @@ package com.wonmally.app.auth.controller;
 
 import com.wonmally.app.auth.dto.*;
 import com.wonmally.app.auth.service.AuthService;
+import com.wonmally.app.utils.IpUtils;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,23 +21,33 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
+    @Operation(summary = "Créer un compte citoyen")
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request,
+                                                  HttpServletRequest httpRequest) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(authService.register(request, IpUtils.extractClientIp(httpRequest)));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    @Operation(summary = "Se connecter et obtenir les tokens JWT")
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request,
+                                               HttpServletRequest httpRequest) {
+        return ResponseEntity.ok(authService.login(request, IpUtils.extractClientIp(httpRequest)));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
-        return ResponseEntity.ok(authService.refresh(request));
+    @Operation(summary = "Renouveler l'access token via le refresh token (rotation)")
+    public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request,
+                                                 HttpServletRequest httpRequest) {
+        return ResponseEntity.ok(authService.refresh(request, IpUtils.extractClientIp(httpRequest)));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshTokenRequest request) {
-        authService.logout(request.getRefreshToken());
+    @Operation(summary = "Révoquer la session courante")
+    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshTokenRequest request,
+                                        HttpServletRequest httpRequest) {
+        authService.logout(request.getRefreshToken(), IpUtils.extractClientIp(httpRequest));
         return ResponseEntity.noContent().build();
     }
 }
