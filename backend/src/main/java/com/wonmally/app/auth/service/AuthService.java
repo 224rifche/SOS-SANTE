@@ -2,6 +2,8 @@ package com.wonmally.app.auth.service;
 
 import com.wonmally.app.audit.service.AuditService;
 import com.wonmally.app.auth.dto.*;
+import com.wonmally.app.citizen.entity.Citizen;
+import com.wonmally.app.citizen.repository.CitizenRepository;
 import com.wonmally.app.exception.AccountLockedException;
 import com.wonmally.app.exception.BadRequestException;
 import com.wonmally.app.security.CustomUserPrincipal;
@@ -28,15 +30,6 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Set;
 
-/**
- * Service d'authentification — inscription, connexion, refresh, déconnexion.
- *
- * Sécurité implémentée :
- *  - Refresh token rotation : chaque appel /refresh invalide l'ancien token et en émet un nouveau
- *  - Hash SHA-256 : seul le hash du refresh token est stocké en DB (protection token theft)
- *  - Brute force : verrouillage compte après MAX_FAILED_ATTEMPTS échecs consécutifs
- *  - Audit : chaque événement auth est journalisé de manière asynchrone
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -54,20 +47,17 @@ public class AuthService {
     private final JwtService             jwtService;
     private final AuthenticationManager  authenticationManager;
     private final AuditService           auditService;
-
-    // -------------------------------------------------------------------------
-    // Inscription
-    // -------------------------------------------------------------------------
+    private final CitizenRepository      citizenRepository;
 
     @Transactional
     public AuthResponse register(RegisterRequest request, String ipAddress) {
         if (userRepository.existsByEmail(request.getEmail())) {
             auditService.logAuthEventAnonymous("REGISTER_FAILED_EMAIL_EXISTS", request.getEmail(), ipAddress);
-            throw new BadRequestException("Un compte existe déjà avec cet email.");
+            throw new BadRequestException("Un compte existe deja avec cet email.");
         }
 
         Role citizenRole = roleRepository.findByName("CITIZEN")
-                .orElseThrow(() -> new IllegalStateException("Rôle CITIZEN non initialisé. Vérifier le seed."));
+                .orElseThrow(() -> new IllegalStateException("Role CITIZEN non initialise. Verifier le seed."));
 
         User user = User.builder()
                 .firstName(request.getFirstName())
@@ -80,24 +70,25 @@ public class AuthService {
                 .roles(Set.of(citizenRole))
                 .build();
 
-        userRepository.save(user);
-        auditService.logAuthEvent("REGISTER_SUCCESS", user, ipAddress);
+        User savedUser = userRepository.save(user);
 
-        return buildAuthResponse(user);
+        Citizen citizen = Citizen.builder()
+                .user(savedUser)
+                .build();
+        citizenRepository.save(citizen);
+
+        auditService.logAuthEvent("REGISTER_SUCCESS", savedUser, ipAddress);
+
+        return buildAuthResponse(savedUser);
     }
-
-    // -------------------------------------------------------------------------
-    // Connexion
-    // -------------------------------------------------------------------------
 
     @Transactional
     public AuthResponse login(LoginRequest request, String ipAddress) {
-        // Vérification du verrouillage AVANT l'authentification (évite un appel inutile)
         userRepository.findByEmail(request.getEmail()).ifPresent(u -> {
             if (isAccountLocked(u)) {
                 throw new AccountLockedException(
-                    "Compte temporairement verrouillé suite à trop de tentatives. " +
-                    "Réessayez dans " + LOCK_DURATION_MINUTES + " minutes.");
+                    "Compte temporairement verrouille suite a trop de tentatives. " +
+                    "Reessayez dans " + LOCK_DURATION_MINUTES + " minutes.");
             }
         });
 
@@ -113,7 +104,6 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadRequestException("Utilisateur introuvable."));
 
-        // Réinitialisation du compteur de tentatives après un succès
         user.setFailedLoginAttempts(0);
         user.setLockedUntil(null);
         user.setLastLogin(LocalDateTime.now());
@@ -123,10 +113,6 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
-    // -------------------------------------------------------------------------
-    // Refresh Token — rotation complète
-    // -------------------------------------------------------------------------
-
     @Transactional
     public AuthResponse refresh(RefreshTokenRequest request, String ipAddress) {
         String incomingHash = HashUtils.sha256Hex(request.getRefreshToken());
@@ -135,20 +121,18 @@ public class AuthService {
                 .orElseThrow(() -> new BadRequestException("Refresh token invalide."));
 
         if (Boolean.TRUE.equals(storedToken.getRevoked())) {
-            // Token révoqué utilisé → possible token theft : on invalide toute la session
             User victim = storedToken.getUser();
             refreshTokenRepository.deleteByUserId(victim.getId());
             auditService.logAuthEvent("TOKEN_THEFT_SUSPECTED", victim, ipAddress);
-            throw new BadRequestException("Session invalidée pour raison de sécurité. Veuillez vous reconnecter.");
+            throw new BadRequestException("Session invalidee pour raison de securite. Veuillez vous reconnecter.");
         }
 
         if (storedToken.getExpirationDate().isBefore(LocalDateTime.now())) {
             storedToken.setRevoked(true);
             refreshTokenRepository.save(storedToken);
-            throw new BadRequestException("Refresh token expiré. Veuillez vous reconnecter.");
+            throw new BadRequestException("Refresh token expire. Veuillez vous reconnecter.");
         }
 
-        // Rotation : on révoque l'ancien token et on en émet un nouveau
         storedToken.setRevoked(true);
         refreshTokenRepository.save(storedToken);
 
@@ -174,10 +158,6 @@ public class AuthService {
                 .build();
     }
 
-    // -------------------------------------------------------------------------
-    // Déconnexion
-    // -------------------------------------------------------------------------
-
     @Transactional
     public void logout(String rawRefreshToken, String ipAddress) {
         String hash = HashUtils.sha256Hex(rawRefreshToken);
@@ -187,10 +167,6 @@ public class AuthService {
             auditService.logAuthEvent("LOGOUT", token.getUser(), ipAddress);
         });
     }
-
-    // -------------------------------------------------------------------------
-    // Helpers privés
-    // -------------------------------------------------------------------------
 
     private AuthResponse buildAuthResponse(User user) {
         UserDetails principal   = new CustomUserPrincipal(user);
