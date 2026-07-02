@@ -7,11 +7,15 @@ import com.wonmally.app.doctor.entity.Doctor;
 import com.wonmally.app.doctor.repository.DoctorRepository;
 import com.wonmally.app.exception.BadRequestException;
 import com.wonmally.app.exception.ResourceNotFoundException;
+import com.wonmally.app.intervention.dto.InterventionResponseDTO;
 import com.wonmally.app.intervention.dto.InterventionStatusUpdateRequest;
 import com.wonmally.app.intervention.entity.Intervention;
+import com.wonmally.app.intervention.mapper.InterventionMapper;
 import com.wonmally.app.intervention.repository.InterventionRepository;
 import com.wonmally.app.websocket.AlertWebSocketService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,8 +39,8 @@ public class InterventionService {
     private final AmbulanceRepository ambulanceRepository;
     private final DoctorRepository doctorRepository;
     private final AlertWebSocketService webSocketService;
+    private final InterventionMapper interventionMapper;
 
-    /** Transitions autorisees de la machine a etats officielle du MVP. */
     private static final Map<InterventionStatus, Set<InterventionStatus>> ALLOWED_TRANSITIONS = new EnumMap<>(InterventionStatus.class);
     static {
         ALLOWED_TRANSITIONS.put(InterventionStatus.ALERTE_CREEE, EnumSet.of(InterventionStatus.EN_ATTENTE_VALIDATION));
@@ -57,7 +61,7 @@ public class InterventionService {
     }
 
     @Transactional
-    public Intervention updateStatus(UUID interventionId, InterventionStatusUpdateRequest request) {
+    public InterventionResponseDTO updateStatus(UUID interventionId, InterventionStatusUpdateRequest request) {
         Intervention intervention = interventionRepository.findById(interventionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Intervention introuvable."));
 
@@ -96,9 +100,29 @@ public class InterventionService {
         intervention.updateStatus(request.getNewStatus());
         intervention = interventionRepository.save(intervention);
 
-        webSocketService.broadcastInterventionUpdate(intervention);
+        InterventionResponseDTO response = interventionMapper.toResponse(intervention);
+        webSocketService.broadcastInterventionUpdate(response);
 
-        return intervention;
+        return response;
+    }
+
+    @Transactional(readOnly = true)
+    public InterventionResponseDTO getInterventionById(UUID id) {
+        Intervention intervention = interventionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Intervention introuvable."));
+        return interventionMapper.toResponse(intervention);
+    }
+
+    @Transactional(readOnly = true)
+    public InterventionResponseDTO getInterventionByAlertId(UUID alertId) {
+        Intervention intervention = interventionRepository.findByAlertId(alertId)
+                .orElseThrow(() -> new ResourceNotFoundException("Intervention introuvable pour cette alerte."));
+        return interventionMapper.toResponse(intervention);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<InterventionResponseDTO> listInterventions(Pageable pageable) {
+        return interventionRepository.findAll(pageable).map(interventionMapper::toResponse);
     }
 
     private void validateTransition(InterventionStatus current, InterventionStatus target) {
