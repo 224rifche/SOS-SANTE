@@ -24,6 +24,7 @@ import com.wonmally.app.intervention.entity.Intervention;
 import com.wonmally.app.intervention.repository.InterventionRepository;
 import com.wonmally.app.medicalcenter.entity.MedicalCenter;
 import com.wonmally.app.medicalcenter.repository.MedicalCenterRepository;
+import com.wonmally.app.notification.service.NotificationService;
 import com.wonmally.app.security.CustomUserPrincipal;
 import com.wonmally.app.user.entity.User;
 import com.wonmally.app.user.repository.UserRepository;
@@ -54,6 +55,7 @@ public class AlertService {
     private final GeolocationService geolocationService;
     private final UserRepository userRepository;
     private final AuditService auditService;
+    private final NotificationService notificationService;
 
     private static final Set<InterventionStatus> VALID_TARGET_STATUSES = Set.of(
         InterventionStatus.VALIDEE,
@@ -100,6 +102,13 @@ public class AlertService {
 
         AlertResponse response = alertMapper.toResponse(alert);
         webSocketService.broadcastNewAlert(response);
+
+        notificationService.notifyUser(
+            citizenUserId,
+            "Alerte enregistree",
+            "Votre alerte a ete transmise a " + nearestCenter.getName() + " et est en attente de validation.",
+            "ALERT_CREATED"
+        );
 
         return response;
     }
@@ -214,6 +223,19 @@ public class AlertService {
 
         AlertResponse response = alertMapper.toResponse(saved);
         webSocketService.broadcastNewAlert(response);
+
+        UUID citizenUserId = alert.getCitizen().getUser().getId();
+        if (targetStatus == InterventionStatus.VALIDEE) {
+            notificationService.notifyUser(citizenUserId,
+                "Alerte validee",
+                "Votre alerte a ete validee. Une ambulance va etre affectee.",
+                "ALERT_VALIDATED");
+        } else {
+            notificationService.notifyUser(citizenUserId,
+                "Alerte rejetee",
+                "Votre alerte a ete rejetee par le centre medical.",
+                "ALERT_REJECTED");
+        }
 
         return response;
     }

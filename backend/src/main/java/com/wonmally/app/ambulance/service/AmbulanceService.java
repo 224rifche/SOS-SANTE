@@ -9,6 +9,7 @@ import com.wonmally.app.exception.ResourceConflictException;
 import com.wonmally.app.exception.ResourceNotFoundException;
 import com.wonmally.app.medicalcenter.entity.MedicalCenter;
 import com.wonmally.app.medicalcenter.repository.MedicalCenterRepository;
+import com.wonmally.app.websocket.AlertWebSocketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +27,7 @@ public class AmbulanceService {
     private final AmbulanceRepository ambulanceRepository;
     private final MedicalCenterRepository medicalCenterRepository;
     private final AmbulanceMapper mapper;
+    private final AlertWebSocketService webSocketService;
 
     private static final Set<String> VALID_STATUSES = Set.of(
         "AVAILABLE", "EN_ROUTE", "ON_MISSION", "MAINTENANCE", "OUT_OF_SERVICE"
@@ -99,7 +101,12 @@ public class AmbulanceService {
 
         ambulance.setGpsLatitude(dto.gpsLatitude());
         ambulance.setGpsLongitude(dto.gpsLongitude());
-        return mapper.toResponse(ambulanceRepository.save(ambulance));
+        Ambulance saved = ambulanceRepository.save(ambulance);
+
+        AmbulanceResponseDTO response = mapper.toResponse(saved);
+        webSocketService.broadcastAmbulancePosition(response);
+
+        return response;
     }
 
     @Transactional
