@@ -10,6 +10,10 @@ import AmbulanceMissionDetail from "../pages/ambulancier/AmbulanceMissionDetail"
 import AmbulancePatientIntake from "../pages/ambulancier/AmbulancePatientIntake";
 import HomeRedirect from "./HomeRedirect";
 import Navbar from "../components/layout/Navbar";
+import MedicalCenterDashboard from "../pages/medical-center/MedicalCenterDashboard";
+import AlertDetailPage from "../pages/medical-center/AlertDetailPage";
+import AmbulanceAssignmentPage from "../pages/medical-center/AmbulanceAssignmentPage";
+import InterventionTrackingPage from "../pages/medical-center/InterventionTrackingPage";
 
 function AppLayout() {
   return (
@@ -42,10 +46,10 @@ export default function AppRoutes() {
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={["MEDICAL_CENTER", "ADMIN"]} />}>
-            <Route
-              path="/medical-center"
-              element={<div>Tableau de bord Centre Medical (a implementer)</div>}
-            />
+            <Route path="/medical-center" element={<MedicalCenterDashboard />} />
+            <Route path="/medical-center/alerts/:alertId" element={<AlertDetailPage />} />
+            <Route path="/medical-center/alerts/:alertId/assign" element={<AmbulanceAssignmentPage />} />
+            <Route path="/medical-center/alerts/:alertId/tracking" element={<InterventionTrackingPage />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={["AMBULANCIER", "ADMIN"]} />}>
