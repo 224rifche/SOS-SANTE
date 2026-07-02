@@ -5,6 +5,7 @@ server:
 
 blocks_storage:
   backend: filesystem
+
   filesystem:
     dir: /data/blocks
 
@@ -13,4 +14,8 @@ compactor:
 
 ingester:
   ring:
+    replication_factor: 1
+
+store_gateway:
+  sharding_ring:
     replication_factor: 1
