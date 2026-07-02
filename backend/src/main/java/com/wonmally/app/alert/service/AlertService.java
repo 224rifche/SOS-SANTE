@@ -9,6 +9,7 @@ import com.wonmally.app.alert.entity.Location;
 import com.wonmally.app.alert.mapper.AlertMapper;
 import com.wonmally.app.alert.repository.AlertRepository;
 import com.wonmally.app.alert.repository.EmergencyCategoryRepository;
+import com.wonmally.app.audit.service.AuditService;
 import com.wonmally.app.citizen.entity.Citizen;
 import com.wonmally.app.citizen.repository.CitizenRepository;
 import com.wonmally.app.common.InterventionStatus;
@@ -24,9 +25,12 @@ import com.wonmally.app.intervention.repository.InterventionRepository;
 import com.wonmally.app.medicalcenter.entity.MedicalCenter;
 import com.wonmally.app.medicalcenter.repository.MedicalCenterRepository;
 import com.wonmally.app.security.CustomUserPrincipal;
+import com.wonmally.app.user.entity.User;
+import com.wonmally.app.user.repository.UserRepository;
 import com.wonmally.app.websocket.AlertWebSocketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,6 +52,8 @@ public class AlertService {
     private final AlertMapper alertMapper;
     private final AlertWebSocketService webSocketService;
     private final GeolocationService geolocationService;
+    private final UserRepository userRepository;
+    private final AuditService auditService;
 
     private static final Set<InterventionStatus> VALID_TARGET_STATUSES = Set.of(
         InterventionStatus.VALIDEE,
@@ -98,12 +104,6 @@ public class AlertService {
         return response;
     }
 
-    /**
-     * Trouve le centre medical actif le plus proche du point d'alerte,
-     * en s'appuyant sur le service de geolocalisation (formule de Haversine).
-     * Fallback sur le premier centre actif si aucune coordonnee n'est disponible
-     * pour un centre (donnees incompletes).
-     */
     private MedicalCenter findNearestActiveCenter(java.math.BigDecimal lat, java.math.BigDecimal lon) {
         List<MedicalCenter> activeCenters = medicalCenterRepository.findByActiveTrue();
 
@@ -207,10 +207,25 @@ public class AlertService {
         alert.setStatus(targetStatus);
         Alert saved = alertRepository.save(alert);
 
+        logCurrentUserAction(
+            targetStatus == InterventionStatus.VALIDEE ? "ALERT_VALIDATED" : "ALERT_REJECTED",
+            saved.getId()
+        );
+
         AlertResponse response = alertMapper.toResponse(saved);
         webSocketService.broadcastNewAlert(response);
 
         return response;
+    }
+
+    private void logCurrentUserAction(String action, UUID entityId) {
+        try {
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            User user = userRepository.findByEmail(email).orElse(null);
+            auditService.logAction(action, user, "ALERT", entityId);
+        } catch (Exception ignored) {
+            // L'audit ne doit jamais casser le flux principal
+        }
     }
 
     private InterventionStatus parseStatus(String rawStatus) {

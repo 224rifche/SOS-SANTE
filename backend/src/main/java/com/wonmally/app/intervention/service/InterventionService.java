@@ -2,6 +2,7 @@ package com.wonmally.app.intervention.service;
 
 import com.wonmally.app.ambulance.entity.Ambulance;
 import com.wonmally.app.ambulance.repository.AmbulanceRepository;
+import com.wonmally.app.audit.service.AuditService;
 import com.wonmally.app.common.InterventionStatus;
 import com.wonmally.app.doctor.entity.Doctor;
 import com.wonmally.app.doctor.repository.DoctorRepository;
@@ -12,10 +13,13 @@ import com.wonmally.app.intervention.dto.InterventionStatusUpdateRequest;
 import com.wonmally.app.intervention.entity.Intervention;
 import com.wonmally.app.intervention.mapper.InterventionMapper;
 import com.wonmally.app.intervention.repository.InterventionRepository;
+import com.wonmally.app.user.entity.User;
+import com.wonmally.app.user.repository.UserRepository;
 import com.wonmally.app.websocket.AlertWebSocketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +44,8 @@ public class InterventionService {
     private final DoctorRepository doctorRepository;
     private final AlertWebSocketService webSocketService;
     private final InterventionMapper interventionMapper;
+    private final UserRepository userRepository;
+    private final AuditService auditService;
 
     private static final Map<InterventionStatus, Set<InterventionStatus>> ALLOWED_TRANSITIONS = new EnumMap<>(InterventionStatus.class);
     static {
@@ -100,10 +106,22 @@ public class InterventionService {
         intervention.updateStatus(request.getNewStatus());
         intervention = interventionRepository.save(intervention);
 
+        logCurrentUserAction("INTERVENTION_STATUS_" + request.getNewStatus(), intervention.getId());
+
         InterventionResponseDTO response = interventionMapper.toResponse(intervention);
         webSocketService.broadcastInterventionUpdate(response);
 
         return response;
+    }
+
+    private void logCurrentUserAction(String action, UUID entityId) {
+        try {
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            User user = userRepository.findByEmail(email).orElse(null);
+            auditService.logAction(action, user, "INTERVENTION", entityId);
+        } catch (Exception ignored) {
+            // L'audit ne doit jamais casser le flux principal
+        }
     }
 
     @Transactional(readOnly = true)
