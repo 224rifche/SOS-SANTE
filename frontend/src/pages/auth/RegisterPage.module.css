@@ -1,0 +1,88 @@
+/* RegisterPage.module.css */
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.card {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.subtitle {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 0.5rem;
+}
+
+.inputIcon {
+  margin-right: 0.5rem;
+  color: #888;
+}
+
+.input {
+  flex: 1;
+  border: none;
+  outline: none;
+}
+
+.button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.button:hover {
+  background: #0056b3;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}

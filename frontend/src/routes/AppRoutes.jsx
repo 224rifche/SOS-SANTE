@@ -1,37 +1,33 @@
-import { Routes, Route } from "react-router-dom";
-import ProtectedRoute from "./ProtectedRoute";
-import LoginPage from "../pages/auth/LoginPage";
-import RegisterPage from "../pages/auth/RegisterPage";
-import SOSPage from "../pages/citizen/SOSPage";
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import HomePage from '../pages/citizen/HomePage'; // 👈 On ajoute la page d'accueil
+import LoginPage from '../pages/auth/LoginPage';
+import RegisterPage from '../pages/auth/RegisterPage';
+import SOSPage from '../pages/citizen/SOSPage';
+import SOSLocalisationPage from '../pages/citizen/SOSLocalisationPage';
+import UrgenceDetailsPage from '../pages/citizen/UrgenceDetailsPage';
+import SOSConfirmationPage from '../pages/citizen/SOSConfirmationPage';
+import SOSSuiviPage from '../pages/citizen/SOSSuiviPage';
 
 export default function AppRoutes() {
   return (
     <Routes>
+      {/* Page d'accueil explicative à la racine */}
+      <Route path="/" element={<HomePage />} />
+
+      {/* Routes d'authentification */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
 
-      <Route element={<ProtectedRoute allowedRoles={["CITIZEN", "ADMIN"]} />}>
-        <Route path="/" element={<SOSPage />} />
-        <Route path="/citizen/tracking/:alertId" element={<div>Suivi de l'intervention (a implementer)</div>} />
-      </Route>
+      {/* Parcours d'urgence Citoyen */}
+      <Route path="/sos" element={<SOSPage />} />
+      <Route path="/sos/localisation" element={<SOSLocalisationPage />} />
+      <Route path="/sos/details" element={<UrgenceDetailsPage />} />
+      <Route path="/sos/confirmation" element={<SOSConfirmationPage />} />
+      <Route path="/sos/suivi" element={<SOSSuiviPage />} />
 
-      <Route element={<ProtectedRoute allowedRoles={["MEDICAL_CENTER", "ADMIN"]} />}>
-        <Route path="/medical-center" element={<div>Tableau de bord Centre Medical (a implementer)</div>} />
-      </Route>
-
-      <Route element={<ProtectedRoute allowedRoles={["AMBULANCIER", "ADMIN"]} />}>
-        <Route path="/ambulancier" element={<div>Tableau de bord Ambulancier (a implementer)</div>} />
-      </Route>
-
-      <Route element={<ProtectedRoute allowedRoles={["DOCTOR", "ADMIN"]} />}>
-        <Route path="/doctor" element={<div>Tableau de bord Medecin (a implementer)</div>} />
-      </Route>
-
-      <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-        <Route path="/admin" element={<div>Tableau de bord Administrateur (a implementer)</div>} />
-      </Route>
-
-      <Route path="*" element={<div>Page introuvable</div>} />
+      {/* Route par défaut : Redirige vers l'accueil si l'URL n'existe pas */}
+      <Route path="*" element={<HomePage />} />
     </Routes>
   );
 }

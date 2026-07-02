@@ -1,47 +1,97 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
-import { toast } from "react-toastify";
-
-const registerSchema = z.object({
-  firstName: z.string().min(1, "Prenom requis"),
-  lastName: z.string().min(1, "Nom requis"),
-  email: z.string().email("Adresse email invalide"),
-  phone: z.string().optional(),
-  password: z.string().min(8, "Au moins 8 caracteres"),
-});
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Mail, Lock, User } from 'lucide-react';
+import styles from './RegisterPage.module.css';
 
 export default function RegisterPage() {
-  const { register: registerUser } = useAuth();
   const navigate = useNavigate();
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
-    resolver: zodResolver(registerSchema),
-  });
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const onSubmit = async (data) => {
-    try {
-      await registerUser(data);
-      toast.success("Compte cree avec succes");
-      navigate("/");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Erreur lors de la creation du compte.");
-    }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Ta logique d'inscription avec l'API Spring Boot viendra se brancher ici
+    console.log("Inscription avec :", { name, email, password });
+
+    // Redirection temporaire pour tester ton flux d'écrans
+    navigate('/sos/details');
   };
 
   return (
-    <div className="auth-page">
-      <h1>Creer un compte - Won-Mally</h1>
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <label>Prenom<input {...register("firstName")} />{errors.firstName && <span className="field-error">{errors.firstName.message}</span>}</label>
-        <label>Nom<input {...register("lastName")} />{errors.lastName && <span className="field-error">{errors.lastName.message}</span>}</label>
-        <label>Email<input type="email" {...register("email")} />{errors.email && <span className="field-error">{errors.email.message}</span>}</label>
-        <label>Telephone<input {...register("phone")} /></label>
-        <label>Mot de passe<input type="password" {...register("password")} />{errors.password && <span className="field-error">{errors.password.message}</span>}</label>
-        <button type="submit" disabled={isSubmitting}>{isSubmitting ? "Creation..." : "Creer mon compte"}</button>
-      </form>
-      <p>Deja un compte ? <Link to="/login">Se connecter</Link></p>
+    <div className={styles.container}>
+      <div className={styles.card}>
+        <div className={styles.topSection}>
+          
+          {/* EN-TÊTE */}
+          <div className={styles.header}>
+            <h1 className={styles.title}>Inscription</h1>
+            <p className={styles.subtitle}>Créez votre compte SOS Santé</p>
+          </div>
+
+          {/* FORMULAIRE */}
+          <form onSubmit={handleSubmit} className={styles.form}>
+            
+            {/* ENTRÉE NOM */}
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Nom complet</label>
+              <div className={styles.inputWrapper}>
+                <User className={styles.inputIcon} size={18} />
+                <input
+                  type="text"
+                  placeholder="Votre nom"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className={styles.input}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* ENTRÉE EMAIL */}
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Adresse e-mail</label>
+              <div className={styles.inputWrapper}>
+                <Mail className={styles.inputIcon} size={18} />
+                <input
+                  type="email"
+                  placeholder="exemple@mail.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={styles.input}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* ENTRÉE MOT DE PASSE */}
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Mot de passe</label>
+              <div className={styles.inputWrapper}>
+                <Lock className={styles.inputIcon} size={18} />
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={styles.input}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* BOUTON D'INSCRIPTION */}
+            <button type="submit" className={styles.button}>
+              S'inscrire
+            </button>
+          </form>
+
+          {/* LIEN VERS CONNEXION */}
+          <div className={styles.footer}>
+            <p>Déjà un compte ? <Link to="/login">Connectez-vous</Link></p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

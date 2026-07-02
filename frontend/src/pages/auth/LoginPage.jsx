@@ -1,51 +1,80 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
-import { toast } from "react-toastify";
-
-const loginSchema = z.object({
-  email: z.string().email("Adresse email invalide"),
-  password: z.string().min(1, "Mot de passe requis"),
-});
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Mail, Lock } from 'lucide-react';
+import styles from './LoginPage.module.css';
 
 export default function LoginPage() {
-  const { login } = useAuth();
   const navigate = useNavigate();
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
-    resolver: zodResolver(loginSchema),
-  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const onSubmit = async (data) => {
-    try {
-      await login(data);
-      toast.success("Connexion reussie");
-      navigate("/");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Email ou mot de passe incorrect.");
-    }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Ta logique de connexion avec l'API Spring Boot viendra se brancher ici
+    console.log("Connexion avec :", { email, password });
+    
+    // Redirection temporaire pour tester ton flux d'écrans
+    navigate('/sos/details');
   };
 
   return (
-    <div className="auth-page">
-      <h1>Connexion - Won-Mally</h1>
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <label>
-          Email
-          <input type="email" {...register("email")} />
-          {errors.email && <span className="field-error">{errors.email.message}</span>}
-        </label>
-        <label>
-          Mot de passe
-          <input type="password" {...register("password")} />
-          {errors.password && <span className="field-error">{errors.password.message}</span>}
-        </label>
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Connexion..." : "Se connecter"}
-        </button>
-      </form>
-      <p>Pas encore de compte ? <Link to="/register">Creer un compte</Link></p>
+    <div className={styles.container}>
+      <div className={styles.card}>
+        <div className={styles.topSection}>
+          
+          {/* EN-TÊTE */}
+          <div className={styles.header}>
+            <h1 className={styles.title}>Connexion</h1>
+            <p className={styles.subtitle}>Accédez à votre espace SOS Santé</p>
+          </div>
+
+          {/* FORMULAIRE */}
+          <form onSubmit={handleSubmit} className={styles.form}>
+            
+            {/* ENTRÉE EMAIL */}
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Adresse e-mail</label>
+              <div className={styles.inputWrapper}>
+                <Mail className={styles.inputIcon} size={18} />
+                <input
+                  type="email"
+                  placeholder="exemple@mail.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={styles.input}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* ENTRÉE MOT DE PASSE */}
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Mot de passe</label>
+              <div className={styles.inputWrapper}>
+                <Lock className={styles.inputIcon} size={18} />
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={styles.input}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* BOUTON DE CONNEXION */}
+            <button type="submit" className={styles.button}>
+              Se connecter
+            </button>
+          </form>
+
+          {/* LIEN VERS INSCRIPTION */}
+          <div className={styles.footer}>
+            <p>Pas encore de compte ? <Link to="/register">Inscrivez-vous</Link></p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
