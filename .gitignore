@@ -57,3 +57,6 @@ frontend/pnpm-debug.log*
 logs/
 tmp/
 temp/
+
+# Dossier agent (outils locaux, non partages)
+.agents/

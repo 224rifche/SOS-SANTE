@@ -9,6 +9,7 @@ import com.wonmally.app.user.entity.User;
 import com.wonmally.app.user.mapper.UserMapper;
 import com.wonmally.app.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.lang.NonNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,14 +25,14 @@ public class UserProfileService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
-    public UserProfileResponseDTO getCurrentProfile(UUID userId) {
+    public UserProfileResponseDTO getCurrentProfile(@NonNull UUID userId) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
         return userMapper.toProfileResponse(user);
     }
 
     @Transactional
-    public UserProfileResponseDTO updateProfile(UUID userId, UpdateProfileRequestDTO dto) {
+    public UserProfileResponseDTO updateProfile(@NonNull UUID userId, UpdateProfileRequestDTO dto) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
 
@@ -40,7 +41,7 @@ public class UserProfileService {
     }
 
     @Transactional
-    public void changePassword(UUID userId, ChangePasswordRequestDTO dto) {
+    public void changePassword(@NonNull UUID userId, ChangePasswordRequestDTO dto) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
 
