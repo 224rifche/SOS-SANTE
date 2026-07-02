@@ -3,6 +3,10 @@ import ProtectedRoute from "./ProtectedRoute";
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
 import SOSPage from "../pages/citizen/SOSPage";
+import Screen1_Dashboard from "../pages/admin/Screen1_Dashboard";
+import Screen2_Utilisateurs from "../pages/admin/Screen2_Utilisateurs";
+import Screen3_Statistiques from "../pages/admin/Screen3_Statistiques";
+import Screen4_JournalAudit from "../pages/admin/Screen4_JournalAudit";
 import HomeRedirect from "./HomeRedirect";
 import Navbar from "../components/layout/Navbar";
 
@@ -42,7 +46,10 @@ export default function AppRoutes() {
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-            <Route path="/admin" element={<div>Tableau de bord Administrateur (a implementer)</div>} />
+            <Route path="/admin" element={<Screen1_Dashboard />} />
+            <Route path="/admin/users" element={<Screen2_Utilisateurs />} />
+            <Route path="/admin/statistics" element={<Screen3_Statistiques />} />
+            <Route path="/admin/audit" element={<Screen4_JournalAudit />} />
           </Route>
         </Route>
       </Route>
