@@ -3,6 +3,7 @@ package com.wonmally.app.intervention.controller;
 import com.wonmally.app.intervention.dto.InterventionResponseDTO;
 import com.wonmally.app.intervention.dto.InterventionStatusUpdateRequest;
 import com.wonmally.app.intervention.service.InterventionService;
+import com.wonmally.app.security.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -21,6 +23,13 @@ import java.util.UUID;
 public class InterventionController {
 
     private final InterventionService interventionService;
+
+    @GetMapping("/active")
+    @PreAuthorize("hasRole('AMBULANCIER')")
+    public ResponseEntity<InterventionResponseDTO> getActiveIntervention(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        return ResponseEntity.of(interventionService.getActiveInterventionForUser(principal.getUserId()));
+    }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MEDICAL_CENTER')")

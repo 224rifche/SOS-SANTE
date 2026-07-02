@@ -12,12 +12,12 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Principal Spring Security personnalisé.
+ * Principal Spring Security personnalise.
  *
- * Authorities contiennent à la fois les rôles (ROLE_ADMIN, ROLE_CITIZEN…)
- * et les permissions granulaires (intervention:read, patient:update…).
+ * Authorities contiennent a la fois les roles (ROLE_ADMIN, ROLE_CITIZEN...)
+ * et les permissions granulaires (intervention:read, patient:update...).
  * Cela permet d'utiliser @PreAuthorize("hasAuthority('intervention:read')")
- * en plus du contrôle par rôle, sans aucun appel DB supplémentaire.
+ * en plus du controle par role, sans aucun appel DB supplementaire.
  */
 @Getter
 public class CustomUserPrincipal implements UserDetails {
@@ -26,19 +26,23 @@ public class CustomUserPrincipal implements UserDetails {
     private final String email;
     private final String password;
     private final boolean enabled;
+    private final String firstName;
+    private final String lastName;
     private final Collection<? extends GrantedAuthority> authorities;
 
     public CustomUserPrincipal(User user) {
-        this.userId   = user.getId();
-        this.email    = user.getEmail();
-        this.password = user.getPassword();
-        this.enabled  = Boolean.TRUE.equals(user.getEnabled());
+        this.userId    = user.getId();
+        this.email     = user.getEmail();
+        this.password  = user.getPassword();
+        this.enabled   = Boolean.TRUE.equals(user.getEnabled());
+        this.firstName = user.getFirstName();
+        this.lastName  = user.getLastName();
 
         Set<GrantedAuthority> auths = new HashSet<>();
         user.getRoles().forEach(role -> {
-            // Autorité de rôle (pour hasRole / hasAnyRole)
+            // Autorite de role (pour hasRole / hasAnyRole)
             auths.add(new SimpleGrantedAuthority("ROLE_" + role.getName()));
-            // Autorités de permission (pour hasAuthority)
+            // Autorites de permission (pour hasAuthority)
             role.getPermissions().forEach(perm ->
                 auths.add(new SimpleGrantedAuthority(perm.getCode()))
             );

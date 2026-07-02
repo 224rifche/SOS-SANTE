@@ -1,0 +1,991 @@
+/* Styles pour le tableau de bord Ambulancier */
+
+.ambulancier-container {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background-color: #F5F7F8;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #2c3e50;
+  padding-bottom: 80px; /* Espace pour la barre de navigation */
+}
+
+/* Header */
+.amb-header {
+  background-color: #135431; /* Vert foncé premium */
+  color: white;
+  padding: 24px 20px 24px 20px;
+  border-bottom-left-radius: 28px;
+  border-bottom-right-radius: 28px;
+  box-shadow: 0 4px 20px rgba(19, 84, 49, 0.15);
+}
+
+.amb-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.amb-team-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.amb-icon-wrapper {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.amb-team-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.amb-team-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.amb-team-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.amb-status-badge {
+  background-color: rgba(255, 255, 255, 0.15);
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.amb-status-badge:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.amb-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #4CAF50; /* Vert pour "En service" */
+}
+
+.amb-status-dot.off-duty {
+  background-color: #FF5252; /* Rouge pour "Hors service" */
+}
+
+/* Content */
+.amb-content {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.amb-section-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #d32f2f; /* Rouge pour "MISSION ACTIVE" */
+  letter-spacing: 1.2px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.amb-section-title.upcoming {
+  color: #455A64; /* Couleur neutre pour "A venir" */
+  margin-top: 5px;
+}
+
+/* Active Mission Card */
+.amb-card {
+  background-color: white;
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  padding: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  cursor: pointer;
+}
+
+.amb-card:hover {
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.07);
+}
+
+.amb-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.amb-card-left {
+  display: flex;
+  gap: 14px;
+}
+
+.amb-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.amb-card-icon.critical {
+  background-color: #FFEBEE;
+  color: #C62828;
+}
+
+.amb-card-icon.scheduled {
+  background-color: #ECEFF1;
+  color: #455A64;
+}
+
+.amb-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.amb-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+
+.amb-card-subtitle {
+  font-size: 0.8rem;
+  color: #78909C;
+  font-weight: 500;
+}
+
+.amb-card-chevron {
+  color: #CFD8DC;
+  margin-top: 4px;
+}
+
+.amb-card-location {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  color: #455A64;
+  line-height: 1.4;
+}
+
+.amb-card-location svg {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+/* Stats / Details subcards */
+.amb-card-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.amb-stat-box {
+  padding: 12px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.amb-stat-box.green {
+  background-color: #E8F5E9;
+  color: #2E7D32;
+}
+
+.amb-stat-box.gray {
+  background-color: #F1F3F4;
+  color: #455A64;
+}
+
+.amb-stat-value {
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.amb-stat-label {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+/* Upcoming Card details */
+.amb-upcoming-card {
+  background-color: white;
+  border-radius: 18px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  padding: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.01);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Bottom Bar */
+.amb-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 480px;
+  margin: 0 auto;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  height: 72px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 10px;
+  z-index: 100;
+}
+
+.amb-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  color: #90A4AE;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.amb-nav-item.active {
+  color: #135431; /* Vert foncé */
+}
+
+.amb-nav-center-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+
+/* Modal Detail Mission */
+.amb-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 200;
+}
+
+.amb-modal {
+  background-color: white;
+  width: 100%;
+  max-width: 480px;
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  padding: 24px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.amb-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.amb-modal-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1A1A1A;
+}
+
+.amb-close-btn {
+  background: none;
+  border: none;
+  padding: 8px;
+  color: #90A4AE;
+  cursor: pointer;
+}
+
+.amb-detail-section {
+  margin-bottom: 24px;
+}
+
+.amb-detail-subtitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #78909C;
+  letter-spacing: 0.8px;
+  margin-bottom: 8px;
+}
+
+.amb-detail-value {
+  font-size: 1rem;
+  color: #2C3E50;
+  font-weight: 600;
+}
+
+/* Timeline/Workflow Steps */
+.amb-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 15px;
+}
+
+.amb-timeline-item {
+  display: flex;
+  gap: 12px;
+  position: relative;
+}
+
+.amb-timeline-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 24px;
+  bottom: -20px;
+  width: 2px;
+  background-color: #ECEFF1;
+}
+
+.amb-timeline-item.active:not(:last-child)::after {
+  background-color: #81C784;
+}
+
+.amb-timeline-node {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #CFD8DC;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.amb-timeline-item.completed .amb-timeline-node {
+  border-color: #4CAF50;
+  background-color: #4CAF50;
+  color: white;
+}
+
+.amb-timeline-item.active .amb-timeline-node {
+  border-color: #1E88E5;
+  background-color: #E3F2FD;
+}
+
+.amb-timeline-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.amb-timeline-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #37474F;
+}
+
+.amb-timeline-item.completed .amb-timeline-title {
+  color: #2E7D32;
+}
+
+.amb-timeline-item.active .amb-timeline-title {
+  color: #1E88E5;
+}
+
+.amb-timeline-desc {
+  font-size: 0.75rem;
+  color: #90A4AE;
+}
+
+/* Actions in Modal */
+.amb-action-panel {
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.amb-primary-btn {
+  background-color: #1e88e5;
+  color: white;
+  width: 100%;
+  padding: 16px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(30, 136, 229, 0.3);
+  transition: all 0.2s ease;
+}
+
+.amb-primary-btn:hover {
+  background-color: #1565c0;
+  transform: translateY(-1px);
+}
+
+.amb-primary-btn:active {
+  transform: translateY(1px);
+}
+
+.amb-primary-btn.success {
+  background-color: #2E7D32;
+  box-shadow: 0 4px 14px rgba(46, 125, 50, 0.3);
+}
+
+.amb-primary-btn.success:hover {
+  background-color: #1B5E20;
+}
+
+.amb-secondary-btn {
+  background-color: #ECEFF1;
+  color: #455A64;
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.amb-secondary-btn:hover {
+  background-color: #CFD8DC;
+}
+
+.amb-error-box {
+  background-color: #FFEBEE;
+  color: #C62828;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-top: 12px;
+  font-weight: 500;
+  border: 1px solid #FFCDD2;
+}
+
+/* Styles pour AmbulanceMissionDetail */
+.amb-detail-view-container {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background-color: #F8F9FA;
+  padding: 24px 20px 100px 20px;
+  position: relative;
+  font-family: 'Inter', -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.amb-detail-view-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 10px;
+  margin-bottom: 8px;
+}
+
+.amb-back-circle-btn {
+  background-color: white;
+  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: none;
+  cursor: pointer;
+  color: #37474F;
+  transition: all 0.2s ease;
+}
+
+.amb-back-circle-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.amb-mission-title-area {
+  display: flex;
+  flex-direction: column;
+}
+
+.amb-mission-id-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1A1A1A;
+  margin: 0;
+}
+
+.amb-priority-tag-red {
+  color: #C62828;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.amb-card-detail {
+  background-color: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+  border: 1px solid rgba(0,0,0,0.015);
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.amb-avatar-circle-green {
+  background-color: #E8F5E9;
+  color: #2E7D32;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.amb-card-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.amb-card-detail-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+
+.amb-card-detail-subtitle {
+  font-size: 0.8rem;
+  color: #78909C;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.amb-location-icon-wrapper {
+  color: #E53935;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.amb-regulator-note-card {
+  background-color: #FFFDE7;
+  border: 1px solid #FFF59D;
+  border-radius: 16px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(255, 245, 157, 0.05);
+}
+
+.amb-note-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #F57F17;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.amb-note-icon {
+  background-color: #F57F17;
+  color: white;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: bold;
+}
+
+.amb-note-content {
+  font-size: 0.9rem;
+  color: #5D4037;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.amb-bottom-action-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px 20px 24px 20px;
+  background: linear-gradient(to top, rgba(248, 249, 250, 1) 80%, rgba(248, 249, 250, 0));
+  z-index: 90;
+}
+
+.amb-action-btn-green {
+  background-color: #135431;
+  color: white;
+  width: 100%;
+  padding: 16px;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(19, 84, 49, 0.25);
+  transition: all 0.2s ease;
+}
+
+.amb-action-btn-green:hover {
+  background-color: #0c361f;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(19, 84, 49, 0.35);
+}
+
+.amb-action-btn-green:active {
+  transform: translateY(1px);
+}
+
+/* Styles pour GPS Navigation View (Screen 3) */
+.amb-gps-container {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+.amb-gps-map-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.amb-gps-top-banner {
+  position: absolute;
+  top: 24px;
+  left: 20px;
+  right: 20px;
+  background-color: #135431; /* Vert foncé premium */
+  border-radius: 20px;
+  padding: 16px 20px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 8px 24px rgba(19, 84, 49, 0.25);
+  z-index: 1000;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.amb-gps-banner-icon {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.amb-gps-banner-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.amb-gps-banner-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.amb-gps-banner-subtitle {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.amb-gps-bottom-card {
+  position: absolute;
+  bottom: 24px;
+  left: 20px;
+  right: 20px;
+  background-color: white;
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  z-index: 1000;
+  border: 1px solid rgba(0, 0, 0, 0.02);
+}
+
+.amb-gps-card-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.amb-gps-card-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.amb-gps-time-eta {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #2E7D32; /* Vert de la navigation */
+  letter-spacing: -0.5px;
+}
+
+.amb-gps-distance-time {
+  font-size: 0.85rem;
+  color: #78909C;
+  font-weight: 600;
+}
+
+.amb-gps-voice-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background-color: #ECEFF1;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #455A64;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.amb-gps-voice-btn:hover {
+  background-color: #CFD8DC;
+  transform: scale(1.03);
+}
+
+.amb-gps-back-btn {
+  position: absolute;
+  top: 90px;
+  left: 20px;
+  z-index: 1000;
+  background-color: white;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border: none;
+  cursor: pointer;
+  color: #37474F;
+  transition: all 0.2s ease;
+}
+
+.amb-gps-back-btn:hover {
+  transform: scale(1.05);
+}
+
+/* Styles pour Patient Intake (Screen 4) */
+.amb-vitals-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.amb-vital-card {
+  background-color: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+  border: 1px solid rgba(0,0,0,0.015);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.amb-vital-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #78909C;
+  font-weight: 600;
+}
+
+.amb-vital-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  color: #1A1A1A;
+}
+
+.amb-vital-input {
+  border: none;
+  background: none;
+  font-size: 1.55rem;
+  font-weight: 800;
+  width: 65px;
+  padding: 0;
+  outline: none;
+  color: #1A1A1A;
+  font-family: inherit;
+}
+
+.amb-vital-unit {
+  font-size: 0.85rem;
+  color: #90A4AE;
+  font-weight: 600;
+}
+
+.amb-section-subtitle-gray {
+  font-size: 0.85rem;
+  color: #90A4AE;
+  font-weight: 700;
+  margin-top: 10px;
+  margin-bottom: 4px;
+}
+
+.amb-pill-selector-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.amb-pill-select-btn {
+  flex: 1;
+  padding: 12px 8px;
+  border-radius: 12px;
+  border: 1px solid #E0E0E0;
+  background-color: white;
+  color: #546E7A;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.amb-pill-select-btn.active {
+  background-color: #2E7D32; /* Vert de la maquette */
+  border-color: #2E7D32;
+  color: white;
+}
+
+.amb-procedure-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.amb-procedure-pill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 8px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.amb-procedure-pill.blue {
+  background-color: #ECEFF1;
+  color: #546E7A;
+}
+
+.amb-procedure-pill.blue.active {
+  background-color: #E3F2FD;
+  border-color: #BBDEFB;
+  color: #1E88E5;
+}
+
+.amb-procedure-pill.green {
+  background-color: #ECEFF1;
+  color: #546E7A;
+}
+
+.amb-procedure-pill.green.active {
+  background-color: #E8F5E9;
+  border-color: #C8E6C9;
+  color: #2E7D32;
+}
+
+
+

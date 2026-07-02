@@ -15,10 +15,10 @@ import java.util.UUID;
 import java.util.function.Function;
 
 /**
- * Génération et validation des Access Token JWT.
- * Les claims embarqués (userId, roles, permissions) évitent une lecture DB
- * supplémentaire dans le filtre d'authentification.
- * Durée de vie : 15 minutes (configurable via application.yml).
+ * Generation et validation des Access Token JWT.
+ * Les claims embarques (userId, roles, permissions) evitent une lecture DB
+ * supplementaire dans le filtre d'authentification.
+ * Duree de vie : 15 minutes (configurable via application.yml).
  */
 @Service
 @SuppressWarnings("null")
@@ -35,7 +35,7 @@ public class JwtService {
     private long accessTokenExpirationMs;
 
     // -------------------------------------------------------------------------
-    // Génération
+    // Generation
     // -------------------------------------------------------------------------
 
     public String generateToken(UserDetails userDetails) {
@@ -100,7 +100,7 @@ public class JwtService {
     }
 
     // -------------------------------------------------------------------------
-    // Helpers privés
+    // Helpers prives
     // -------------------------------------------------------------------------
 
     private Date extractExpiration(String token) {

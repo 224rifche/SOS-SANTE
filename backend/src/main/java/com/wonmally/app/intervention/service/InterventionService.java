@@ -2,6 +2,8 @@ package com.wonmally.app.intervention.service;
 
 import com.wonmally.app.ambulance.entity.Ambulance;
 import com.wonmally.app.ambulance.repository.AmbulanceRepository;
+import com.wonmally.app.ambulancier.entity.Ambulancier;
+import com.wonmally.app.ambulancier.repository.AmbulancierRepository;
 import com.wonmally.app.audit.service.AuditService;
 import com.wonmally.app.common.InterventionStatus;
 import com.wonmally.app.doctor.entity.Doctor;
@@ -27,6 +29,7 @@ import java.time.LocalDateTime;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -43,6 +46,7 @@ public class InterventionService {
     private final AmbulanceRepository ambulanceRepository;
     private final DoctorRepository doctorRepository;
     private final AlertWebSocketService webSocketService;
+    private final AmbulancierRepository ambulancierRepository;
     private final InterventionMapper interventionMapper;
     private final UserRepository userRepository;
     private final AuditService auditService;
@@ -141,6 +145,23 @@ public class InterventionService {
     @Transactional(readOnly = true)
     public Page<InterventionResponseDTO> listInterventions(Pageable pageable) {
         return interventionRepository.findAll(pageable).map(interventionMapper::toResponse);
+    }
+
+    /**
+     * Retourne l'intervention active (non terminee, non archivee) sur laquelle
+     * l'ambulancier connecte est actuellement affecte, via son ambulance assignee
+     * (Ambulancier.currentAmbulance) - lien precis, pas une approximation par centre medical.
+     */
+    @Transactional(readOnly = true)
+    public Optional<InterventionResponseDTO> getActiveInterventionForUser(UUID userId) {
+        Ambulancier ambulancier = ambulancierRepository.findByUserId(userId).orElse(null);
+        if (ambulancier == null || ambulancier.getCurrentAmbulance() == null) {
+            return Optional.empty();
+        }
+
+        return interventionRepository
+                .findFirstByAmbulanceIdAndCompletedAtIsNullAndArchivedFalse(ambulancier.getCurrentAmbulance().getId())
+                .map(interventionMapper::toResponse);
     }
 
     private void validateTransition(InterventionStatus current, InterventionStatus target) {
