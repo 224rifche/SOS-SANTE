@@ -1,3 +1,5 @@
+@import "./dashboard.css";
+
 :root {
   /* Charte graphique - Phase 2 Partie 1 : Design System */
   --color-red-emergency: #E53935;   /* Urgences, alertes critiques, bouton SOS */
