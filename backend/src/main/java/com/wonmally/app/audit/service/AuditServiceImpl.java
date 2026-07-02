@@ -10,14 +10,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 /**
- * Implémentation asynchrone de l'audit.
+ * Implementation asynchrone de l'audit.
  *
- * @Async : l'écriture en DB se fait dans un thread séparé — la réponse auth
- *          n'est pas bloquée par la persistence du log.
- *
- * Propagation.REQUIRES_NEW : l'audit survit à un rollback du service appelant
- *          (ex : échec de login → on logue quand même l'événement).
+ * @Async : l'ecriture en DB se fait dans un thread separe.
+ * Propagation.REQUIRES_NEW : l'audit survit a un rollback du service appelant.
  */
 @Slf4j
 @Service
@@ -43,7 +42,7 @@ public class AuditServiceImpl implements AuditService {
                     .build();
             auditLogRepository.save(log);
         } catch (Exception e) {
-            log.error("Échec de l'écriture du log d'audit pour action={} userId={}: {}",
+            log.error("Echec de l'ecriture du log d'audit pour action={} userId={}: {}",
                     action, user.getId(), e.getMessage());
         }
     }
@@ -61,8 +60,26 @@ public class AuditServiceImpl implements AuditService {
                     .build();
             auditLogRepository.save(auditLog);
         } catch (Exception e) {
-            log.error("Échec de l'écriture du log d'audit anonyme pour action={}: {}",
+            log.error("Echec de l'ecriture du log d'audit anonyme pour action={}: {}",
                     action, e.getMessage());
+        }
+    }
+
+    @Async
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logAction(String action, User user, String entityName, UUID entityId) {
+        try {
+            AuditLog auditLog = AuditLog.builder()
+                    .user(user)
+                    .action(action)
+                    .entityName(entityName)
+                    .entityId(entityId)
+                    .build();
+            auditLogRepository.save(auditLog);
+        } catch (Exception e) {
+            log.error("Echec de l'ecriture du log d'audit pour action={} entity={} entityId={}: {}",
+                    action, entityName, entityId, e.getMessage());
         }
     }
 }
