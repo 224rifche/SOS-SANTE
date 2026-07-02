@@ -9,13 +9,14 @@ function decodeUserFromToken(token) {
   try {
     const payload = jwtDecode(token);
     return {
-      id: payload.userId,
+      userId: payload.userId || null,
       email: payload.sub,
       firstName: payload.firstName,
       lastName: payload.lastName,
-      roles: (payload.authorities || payload.roles || []).map((r) =>
+      roles: (payload.roles || payload.authorities || []).map((r) =>
         typeof r === "string" ? r.replace("ROLE_", "") : r
       ),
+      permissions: payload.permissions || [],
     };
   } catch {
     return null;
@@ -57,7 +58,15 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const hasRole = useCallback((role) => user?.roles?.includes(role) ?? false, [user]);
+  const hasRole = useCallback(
+    (role) => user?.roles?.includes(role) ?? false,
+    [user]
+  );
+
+  const hasPermission = useCallback(
+    (permission) => user?.permissions?.includes(permission) ?? false,
+    [user]
+  );
 
   const value = useMemo(() => ({
     user,
@@ -67,7 +76,8 @@ export function AuthProvider({ children }) {
     register,
     logout,
     hasRole,
-  }), [user, accessToken, login, register, logout, hasRole]);
+    hasPermission,
+  }), [user, accessToken, login, register, logout, hasRole, hasPermission]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

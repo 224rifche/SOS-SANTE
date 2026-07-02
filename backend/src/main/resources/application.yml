@@ -50,9 +50,12 @@ server:
 wonmally:
   security:
     jwt:
-      secret: ${JWT_SECRET:CHANGE_ME_IN_PRODUCTION_minimum_256_bits_secret_key_required}
+      secret: ${JWT_SECRET:CHANGE_ME_IN_PRODUCTION_minimum_512_bits_64_chars_secret_key_required!}
       access-token-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:900000}      # 15 minutes
       refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000} # 7 jours
+    rate-limit:
+      max-attempts: ${RATE_LIMIT_MAX_ATTEMPTS:10}     # tentatives /login par IP
+      window-minutes: ${RATE_LIMIT_WINDOW_MINUTES:15} # durée de la fenêtre
 
 springdoc:
   api-docs:
@@ -64,10 +67,19 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: "*"
   endpoint:
     health:
-      show-details: when-authorized
+      show-details: always
+  metrics:
+    tags:
+      application: wonmally-backend
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  tracing:
+    enabled: false
 
 logging:
   level:

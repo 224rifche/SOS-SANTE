@@ -44,6 +44,7 @@ apiClient.interceptors.response.use(
         try {
           const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
           localStorage.setItem("wonmally_access_token", data.accessToken);
+          localStorage.setItem("wonmally_refresh_token", data.refreshToken);
           isRefreshing = false;
           onRefreshed(data.accessToken);
         } catch (refreshError) {
