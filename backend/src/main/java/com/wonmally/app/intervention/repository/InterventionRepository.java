@@ -12,4 +12,5 @@ public interface InterventionRepository extends JpaRepository<Intervention, UUID
     Optional<Intervention> findByAlertId(UUID alertId);
     List<Intervention> findByMedicalCenterIdAndCurrentStatusNot(UUID medicalCenterId, InterventionStatus status);
     List<Intervention> findByDoctorId(UUID doctorId);
+    long countByArchivedFalse();
 }
