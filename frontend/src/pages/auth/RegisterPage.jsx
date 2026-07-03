@@ -4,6 +4,7 @@ import { z } from "zod";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "react-toastify";
+import "../../styles/global.css";
 
 const registerSchema = z.object({
   firstName: z.string().min(1, "Prénom requis"),
@@ -31,118 +32,111 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="container d-flex align-items-center justify-content-center min-vh-100 py-5">
-      <div className="row justify-content-center w-100">
-        <div className="col-12 col-md-10 col-lg-6">
-          {/* Header */}
-          <div className="text-center mb-4">
-            <div className="d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-10 text-danger rounded-circle p-3 mb-3 shadow-sm border border-danger border-opacity-25" style={{ width: "70px", height: "70px" }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" className="bi bi-heart-pulse-fill" viewBox="0 0 16 16">
-                <path d="M1.475 9c.085.302.263.58.53.754l.003.002 4.795 3.197a1 1 0 0 0 1.114 0l4.794-3.197c.27-.174.448-.452.533-.754H1.475ZM0 8a1.5 1.5 0 0 1 .728-1.286l.007-.005 5.9-3.933a1.5 1.5 0 0 1 1.662 0l5.9 3.933.007.005A1.5 1.5 0 0 1 16 8H0Zm5.443-4.757a.5.5 0 0 0-.586.378l-1.05 4.2H.5a.5.5 0 0 0 0 1h3.75a.5.5 0 0 0 .485-.378l.78-3.12 1.345 5.38a.5.5 0 0 0 .97.003l1.11-4.44 1.162 2.324a.5.5 0 0 0 .893.006L12 6.4h3.5a.5.5 0 0 0 0-1H11.5a.5.5 0 0 0-.447.276L10.3 7.15l-1.42-2.84a.5.5 0 0 0-.904-.038L6.87 8.71 5.443 3.243Z"/>
-              </svg>
-            </div>
-            <h2 className="fw-bold text-dark mb-1">Won-Mally</h2>
-            <p className="text-secondary small">Rejoignez la plateforme d'entraide médicale</p>
+    <div className="auth-ne-wrapper">
+      <div className="auth-ne-brand">
+        <Link to="/" className="auth-ne-logo text-decoration-none text-white">
+          <span className="auth-ne-logo-icon">NE</span>
+          <span>
+            <strong>Nhellan Emergency</strong>
+            <small>Chaque seconde compte</small>
+          </span>
+        </Link>
+
+        <div className="auth-ne-brand-content">
+          <span className="auth-ne-badge">Plateforme médicale certifiée</span>
+          <h1>Rejoignez la communauté</h1>
+          <p>
+            Créez votre compte pour accéder aux services d'urgence,
+            suivre vos demandes en temps réel et sauver des vies.
+          </p>
+          <ul className="auth-ne-features">
+            <li>Accès instantané aux services d'urgence</li>
+            <li>Suivi en temps réel de vos demandes</li>
+            <li>Communication sécurisée avec les professionnels</li>
+          </ul>
+        </div>
+
+        <svg className="auth-ne-pulse" viewBox="0 0 460 80" aria-hidden="true">
+          <path d="M0 40 L80 40 L100 10 L125 70 L145 40 L200 40 L215 25 L230 55 L260 40 L460 40" fill="none" stroke="rgba(229,57,53,0.6)" strokeWidth="2" />
+        </svg>
+      </div>
+
+      <div className="auth-ne-form-panel">
+        <div className="auth-ne-form-card">
+          <div className="text-center mb-4 d-lg-none">
+            <span className="auth-ne-logo-icon d-inline-flex mb-2">NE</span>
+            <h2 className="h5 fw-bold mb-0">Nhellan Emergency</h2>
           </div>
 
-          {/* Register Card */}
-          <div className="card border-0 shadow-lg p-4 rounded-4" style={{ background: "rgba(255, 255, 255, 0.9)", backdropFilter: "blur(10px)" }}>
-            <h4 className="fw-bold mb-4 text-center">Création de compte</h4>
-            
-            <form onSubmit={handleSubmit(onSubmit)} noValidate>
-              <div className="row">
-                {/* First Name */}
-                <div className="col-12 col-sm-6 mb-3">
-                  <div className="form-floating">
-                    <input 
-                      type="text" 
-                      className={`form-control border-secondary border-opacity-25 ${errors.firstName ? "is-invalid" : ""}`} 
-                      id="firstNameInput" 
-                      placeholder="Prénom"
-                      {...register("firstName")} 
-                    />
-                    <label htmlFor="firstNameInput">Prénom</label>
-                    {errors.firstName && <div className="invalid-feedback">{errors.firstName.message}</div>}
-                  </div>
-                </div>
+          <h2 className="auth-ne-form-title">Création de compte</h2>
+          <p className="auth-ne-form-sub">Rejoignez la plateforme d'urgence</p>
 
-                {/* Last Name */}
-                <div className="col-12 col-sm-6 mb-3">
-                  <div className="form-floating">
-                    <input 
-                      type="text" 
-                      className={`form-control border-secondary border-opacity-25 ${errors.lastName ? "is-invalid" : ""}`} 
-                      id="lastNameInput" 
-                      placeholder="Nom"
-                      {...register("lastName")} 
-                    />
-                    <label htmlFor="lastNameInput">Nom de famille</label>
-                    {errors.lastName && <div className="invalid-feedback">{errors.lastName.message}</div>}
-                  </div>
-                </div>
-              </div>
-
-              {/* Email */}
-              <div className="form-floating mb-3">
-                <input 
-                  type="email" 
-                  className={`form-control border-secondary border-opacity-25 ${errors.email ? "is-invalid" : ""}`} 
-                  id="emailInput" 
-                  placeholder="name@example.com"
-                  {...register("email")} 
+          <form onSubmit={handleSubmit(onSubmit)} noValidate>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div>
+                <label className="auth-ne-label" htmlFor="firstName">Prénom</label>
+                <input
+                  id="firstName"
+                  type="text"
+                  className={`auth-ne-input ${errors.firstName ? "is-invalid" : ""}`}
+                  placeholder="Jean"
+                  {...register("firstName")}
                 />
-                <label htmlFor="emailInput">Adresse email</label>
-                {errors.email && <div className="invalid-feedback">{errors.email.message}</div>}
+                {errors.firstName && <p className="auth-ne-error">{errors.firstName.message}</p>}
               </div>
 
-              {/* Phone */}
-              <div className="form-floating mb-3">
-                <input 
-                  type="tel" 
-                  className={`form-control border-secondary border-opacity-25 ${errors.phone ? "is-invalid" : ""}`} 
-                  id="phoneInput" 
-                  placeholder="Téléphone"
-                  {...register("phone")} 
+              <div>
+                <label className="auth-ne-label" htmlFor="lastName">Nom</label>
+                <input
+                  id="lastName"
+                  type="text"
+                  className={`auth-ne-input ${errors.lastName ? "is-invalid" : ""}`}
+                  placeholder="Dupont"
+                  {...register("lastName")}
                 />
-                <label htmlFor="phoneInput">Numéro de téléphone (optionnel)</label>
-                {errors.phone && <div className="invalid-feedback">{errors.phone.message}</div>}
+                {errors.lastName && <p className="auth-ne-error">{errors.lastName.message}</p>}
               </div>
-
-              {/* Password */}
-              <div className="form-floating mb-4">
-                <input 
-                  type="password" 
-                  className={`form-control border-secondary border-opacity-25 ${errors.password ? "is-invalid" : ""}`} 
-                  id="passwordInput" 
-                  placeholder="Mot de passe"
-                  {...register("password")} 
-                />
-                <label htmlFor="passwordInput">Mot de passe</label>
-                {errors.password && <div className="invalid-feedback">{errors.password.message}</div>}
-              </div>
-
-              {/* Submit Button */}
-              <button 
-                type="submit" 
-                className="btn btn-primary btn-lg w-100 py-3 rounded-3 shadow-sm fw-semibold mb-3"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <div className="spinner-border spinner-border-sm me-2" role="status"></div>
-                ) : null}
-                {isSubmitting ? "Création en cours..." : "Créer mon compte"}
-              </button>
-            </form>
-
-            <div className="text-center mt-3">
-              <p className="mb-0 text-secondary small">
-                Déjà inscrit ?{" "}
-                <Link to="/login" className="text-primary fw-semibold text-decoration-none">
-                  Se connecter
-                </Link>
-              </p>
             </div>
-          </div>
+
+            <label className="auth-ne-label" htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              className={`auth-ne-input ${errors.email ? "is-invalid" : ""}`}
+              placeholder="vous@exemple.com"
+              {...register("email")}
+            />
+            {errors.email && <p className="auth-ne-error">{errors.email.message}</p>}
+
+            <label className="auth-ne-label" htmlFor="phone">Téléphone (optionnel)</label>
+            <input
+              id="phone"
+              type="tel"
+              className={`auth-ne-input ${errors.phone ? "is-invalid" : ""}`}
+              placeholder="+33 6 12 34 56 78"
+              {...register("phone")}
+            />
+            {errors.phone && <p className="auth-ne-error">{errors.phone.message}</p>}
+
+            <label className="auth-ne-label" htmlFor="password">Mot de passe</label>
+            <input
+              id="password"
+              type="password"
+              className={`auth-ne-input ${errors.password ? "is-invalid" : ""}`}
+              placeholder="••••••••"
+              {...register("password")}
+            />
+            {errors.password && <p className="auth-ne-error">{errors.password.message}</p>}
+
+            <button type="submit" className="auth-ne-submit" disabled={isSubmitting}>
+              {isSubmitting ? "Création en cours..." : "Créer mon compte"}
+            </button>
+          </form>
+
+          <p className="auth-ne-footer">
+            Déjà inscrit ?{" "}
+            <Link to="/login">Se connecter</Link>
+          </p>
         </div>
       </div>
     </div>

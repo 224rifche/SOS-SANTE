@@ -25,7 +25,7 @@ public class InterventionController {
     private final InterventionService interventionService;
 
     @GetMapping("/active")
-    @PreAuthorize("hasRole('AMBULANCIER')")
+    @PreAuthorize("hasAnyRole('AMBULANCIER', 'ADMIN')")
     public ResponseEntity<InterventionResponseDTO> getActiveIntervention(
             @AuthenticationPrincipal CustomUserPrincipal principal) {
         return ResponseEntity.of(interventionService.getActiveInterventionForUser(principal.getUserId()));

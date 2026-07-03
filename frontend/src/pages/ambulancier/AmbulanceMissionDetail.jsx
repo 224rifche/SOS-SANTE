@@ -1,63 +1,65 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { interventionService } from "../../services/interventionService";
+import { alertService } from "../../services/alertService";
 import { toast } from "react-toastify";
 import "../../styles/ambulancier.css";
+
+function getPriorityLabel(priority) {
+  if (priority === 1) return "Critique";
+  if (priority === 2) return "Haute";
+  return "Standard";
+}
 
 export default function AmbulanceMissionDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [intervention, setIntervention] = useState(null);
+  const [alertData, setAlertData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isMocked, setIsMocked] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchInterventionDetails = async () => {
+    let cancelled = false;
+
+    async function fetchDetails() {
       setLoading(true);
+      setError(null);
       try {
-        const data = await interventionService.getActiveIntervention();
-        if (data && (data.id === id || !id)) {
-          setIntervention(data);
-          setIsMocked(false);
-        } else {
-          loadMockDetails();
+        const interventionData = id
+          ? await interventionService.getById(id)
+          : await interventionService.getActiveIntervention();
+
+        if (cancelled) return;
+
+        if (!interventionData) {
+          setError("Aucune mission trouvée.");
+          return;
+        }
+
+        setIntervention(interventionData);
+
+        if (interventionData.alertId) {
+          const alert = await alertService.getAlertById(interventionData.alertId);
+          if (!cancelled) setAlertData(alert);
         }
       } catch (err) {
-        console.warn("Erreur lors de la récupération des détails réels, chargement des données de simulation...", err);
-        loadMockDetails();
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchInterventionDetails();
-  }, [id]);
-
-  const loadMockDetails = () => {
-    setIntervention({
-      id: id || "mock-12345",
-      currentStatus: "AMBULANCE_AFFECTEE",
-      alert: {
-        id: "alert-mock",
-        categoryName: "Malaise cardiaque",
-        priority: 1, // Critique
-        description: "Douleur thoracique intense, sueurs froides. Préparer oxygène + ECG. Patient conscient.",
-        latitude: 12.6392,
-        longitude: 8.0029,
-        location: {
-          address: "Quartier Hippodrome, Rue 224, porte 87"
+        if (!cancelled) {
+          if (err.response?.status === 404) {
+            setError("Aucune mission trouvée.");
+          } else {
+            setError(err.response?.data?.message || "Impossible de charger les détails de la mission.");
+            toast.error("Impossible de charger les détails de la mission.");
+          }
         }
-      },
-      patient: {
-        name: "Awa Diallo",
-        gender: "F",
-        age: 32,
-        bloodGroup: "O+",
-        allergies: "Allergie pénicilline"
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-    });
-    setIsMocked(true);
-  };
+    }
+
+    fetchDetails();
+    return () => { cancelled = true; };
+  }, [id]);
 
   if (loading) {
     return (
@@ -67,36 +69,35 @@ export default function AmbulanceMissionDetail() {
     );
   }
 
-  if (!intervention) {
+  if (error || !intervention) {
     return (
       <div className="amb-detail-view-container" style={{ justifyContent: "center", alignItems: "center" }}>
-        <div>Aucune mission trouvée.</div>
-        <button onClick={() => navigate("/ambulancier")} className="amb-secondary-btn" style={{ marginTop: "16px" }}>
+        <div>{error || "Aucune mission trouvée."}</div>
+        <button type="button" onClick={() => navigate("/ambulancier")} className="amb-secondary-btn" style={{ marginTop: "16px" }}>
           Retour au tableau de bord
         </button>
       </div>
     );
   }
 
-  // Obtenir les détails du patient (réels ou simulés)
-  const patientName = intervention.patient?.name || "Awa Diallo";
-  const patientDetails = intervention.patient 
-    ? `${intervention.patient.gender} - ${intervention.patient.age} ans - ${intervention.patient.bloodGroup} - ${intervention.patient.allergies}`
-    : "F - 32 ans - O+ - Allergie pénicilline";
+  const patientName = alertData
+    ? `${alertData.citizenFirstName || ""} ${alertData.citizenLastName || ""}`.trim() || "Patient"
+    : "Patient";
 
-  // Obtenir la note du régulateur (description de l'alerte)
-  const regulatorNote = intervention.alert?.description || "Douleur thoracique intense, sueurs froides. Préparer oxygène + ECG. Patient conscient.";
+  const patientDetails = [
+    alertData?.bloodGroup ? `Groupe ${alertData.bloodGroup}` : null,
+    alertData?.citizenPhone || null,
+  ].filter(Boolean).join(" · ") || "Informations patient non disponibles";
 
-  // Obtenir les coordonnées géographiques
-  const lat = intervention.alert?.latitude ? intervention.alert.latitude.toFixed(4) : "12.6392";
-  const lng = intervention.alert?.longitude ? Math.abs(intervention.alert.longitude).toFixed(4) : "8.0029";
-  const locationDetails = `${intervention.alert?.location?.address || "Quartier Hippodrome, Rue 224, porte 87"} - ${lat}° N, ${lng}° O`;
+  const lat = alertData?.latitude != null ? Number(alertData.latitude).toFixed(4) : null;
+  const lng = alertData?.longitude != null ? Math.abs(Number(alertData.longitude)).toFixed(4) : null;
+  const coordsText = lat && lng ? `${lat}° N, ${lng}° O` : "";
+  const locationDetails = [alertData?.address, coordsText].filter(Boolean).join(" — ") || "Lieu non renseigné";
 
   return (
     <div className="amb-detail-view-container">
-      {/* Header */}
       <div className="amb-detail-view-header">
-        <button className="amb-back-circle-btn" onClick={() => navigate(window.location.pathname.startsWith("/dev") ? "/dev/mission" : "/ambulancier")} aria-label="Retour">
+        <button type="button" className="amb-back-circle-btn" onClick={() => navigate("/ambulancier")} aria-label="Retour">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="19" y1="12" x2="5" y2="12" />
             <polyline points="12 19 5 12 12 5" />
@@ -104,18 +105,17 @@ export default function AmbulanceMissionDetail() {
         </button>
         <div className="amb-mission-title-area">
           <h1 className="amb-mission-id-title">
-            Mission #{intervention.id ? intervention.id.substring(0, 7).toUpperCase() : "NE-2481"}
+            Mission #{String(intervention.id).substring(0, 7).toUpperCase()}
           </h1>
           <span className="amb-priority-tag-red">
-            <span style={{ fontSize: "1.2rem" }}>●</span> Critique
+            <span style={{ fontSize: "1.2rem" }}>●</span> {getPriorityLabel(alertData?.priority)}
           </span>
         </div>
       </div>
 
-      {/* Patient Card */}
       <div className="amb-card-detail">
         <div className="amb-avatar-circle-green">
-          {patientName.split(" ").map(n => n.charAt(0)).join("").substring(0, 2).toUpperCase()}
+          {patientName.split(" ").map((n) => n.charAt(0)).join("").substring(0, 2).toUpperCase()}
         </div>
         <div className="amb-card-detail-info">
           <span className="amb-card-detail-title">{patientName}</span>
@@ -123,7 +123,6 @@ export default function AmbulanceMissionDetail() {
         </div>
       </div>
 
-      {/* Location Card */}
       <div className="amb-card-detail">
         <div className="amb-location-icon-wrapper">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
@@ -132,27 +131,33 @@ export default function AmbulanceMissionDetail() {
         </div>
         <div className="amb-card-detail-info">
           <span className="amb-card-detail-title">
-            {intervention.alert?.location?.address?.split(",")[0] || "Quartier Hippodrome"}
+            {alertData?.address?.split(",")[0] || "Lieu de l'urgence"}
           </span>
           <span className="amb-card-detail-subtitle">{locationDetails}</span>
         </div>
       </div>
 
-      {/* Regulator Note Card */}
       <div className="amb-regulator-note-card">
         <div className="amb-note-header">
           <div className="amb-note-icon">i</div>
           <span>Note du régulateur</span>
         </div>
         <div className="amb-note-content">
-          {regulatorNote}
+          {alertData?.description || "Aucune note transmise par le centre de régulation."}
         </div>
       </div>
 
-      {/* Bottom Sticky Action Button */}
+      {intervention.medicalCenterName && (
+        <div className="amb-card-detail">
+          <div className="amb-card-detail-info">
+            <span className="amb-card-detail-title">Centre médical</span>
+            <span className="amb-card-detail-subtitle">{intervention.medicalCenterName}</span>
+          </div>
+        </div>
+      )}
+
       <div className="amb-bottom-action-container">
-        <button className="amb-action-btn-green" onClick={() => navigate(window.location.pathname.startsWith("/dev") ? "/dev/itineraire" : "/ambulancier/itineraire")}>
-          {/* Navigation arrow icon */}
+        <button type="button" className="amb-action-btn-green" onClick={() => navigate("/ambulancier/itineraire")}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polygon points="3 11 22 2 13 21 11 13 3 11" />
           </svg>

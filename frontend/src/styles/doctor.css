@@ -1,0 +1,126 @@
+/* Nhellan Emergency — Espace Médecin */
+
+:root {
+  --doc-bg: #f0f4f8;
+  --doc-header: linear-gradient(135deg, #007a78 0%, #005f5d 100%);
+  --doc-card: #ffffff;
+  --doc-border: #e2e8f0;
+  --doc-text: #0f172a;
+  --doc-muted: #64748b;
+  --doc-teal: #007a78;
+}
+
+.doc-layout {
+  min-height: 100vh;
+  background: var(--doc-bg);
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+
+.doc-layout-header {
+  background: var(--doc-header);
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.doc-layout-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.doc-layout-brand-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.75rem;
+}
+
+.doc-layout-main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+}
+
+.doc-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.doc-stat-card {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 14px;
+  color: white;
+}
+
+.doc-stat-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.doc-stat-label {
+  font-size: 0.75rem;
+  opacity: 0.85;
+  margin-top: 4px;
+}
+
+.doc-card {
+  background: var(--doc-card);
+  border: 1px solid var(--doc-border);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.doc-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: box-shadow 0.15s ease;
+}
+
+.doc-card-link:hover {
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+.doc-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(0, 122, 120, 0.1);
+  color: var(--doc-teal);
+}
+
+.doc-page-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin: 0 0 16px;
+}
+
+.doc-btn {
+  background: var(--doc-teal);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.doc-btn:disabled {
+  opacity: 0.6;
+}

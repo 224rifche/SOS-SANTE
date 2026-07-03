@@ -20,5 +20,10 @@ public class AlertResponse {
     private String description;
     private BigDecimal latitude;
     private BigDecimal longitude;
+    private String address;
+    private String citizenFirstName;
+    private String citizenLastName;
+    private String citizenPhone;
+    private String bloodGroup;
     private LocalDateTime createdAt;
 }

@@ -1,7 +1,21 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { alertService } from "../../services/alertService";
+import { ambulanceService } from "../../services/ambulanceService";
+import { interventionService } from "../../services/interventionService";
+import { useWebSocket } from "../../contexts/WebSocketContext";
+import RegulationMap from "./RegulationMap";
+import { validateAndAssignAmbulance } from "./alertWorkflow";
+import {
+  formatAlertCode,
+  formatClock,
+  formatGpsCoordinates,
+  priorityFullLabel,
+  ambulanceStatusLabel,
+  isAmbulanceAssignable,
+} from "./regulationUtils";
 
-// SVG Icons
 const BackArrowIcon = () => (
   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <line x1="19" y1="12" x2="5" y2="12" />
@@ -37,189 +51,243 @@ const AmbulanceIcon = () => (
   </svg>
 );
 
-const CloseIcon = () => (
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="6" x2="6" y2="18" />
-    <line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-);
-
 export default function AlertDetailPage() {
   const { alertId } = useParams();
   const navigate = useNavigate();
-  
-  const [showLabel, setShowLabel] = useState(true);
-  const [dispatchStatus, setDispatchStatus] = useState("idle"); // idle | assigning | success
+  const { connected, subscribe } = useWebSocket();
+
+  const [alert, setAlert] = useState(null);
+  const [intervention, setIntervention] = useState(null);
+  const [ambulances, setAmbulances] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [dispatchStatus, setDispatchStatus] = useState("idle");
   const [assignedAmbulance, setAssignedAmbulance] = useState("");
-  const [time, setTime] = useState(new Date().toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' }));
+  const [time, setTime] = useState(formatClock());
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [alertData, ambulancesRes] = await Promise.all([
+        alertService.getAlertById(alertId),
+        ambulanceService.list({ size: 100 }),
+      ]);
+      setAlert(alertData);
+      setAmbulances(ambulancesRes.content || []);
+
+      try {
+        const interventionData = await interventionService.getByAlertId(alertId);
+        setIntervention(interventionData);
+      } catch {
+        setIntervention(null);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Impossible de charger le détail de l'alerte.");
+    } finally {
+      setLoading(false);
+    }
+  }, [alertId]);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTime(new Date().toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' }));
-    }, 60000);
+    const timer = setInterval(() => setTime(formatClock()), 60000);
     return () => clearInterval(timer);
   }, []);
 
-  // Simuler les détails de l'alerte #NE-2481 de l'image
-  const alertData = {
-    id: "alert-1",
-    code: "#NE-2481",
-    patientName: "Awa Diallo",
-    patientDetails: "F • 32 ans • Groupe O+",
-    patientAvatar: "AD",
-    address: "Quartier Hippodrome, Rue 224 porte 87",
-    gps: "12.6392° N - 8.0029° O",
-    urgencyTitle: "Malaise cardiaque",
-    urgencyDescription: "« Homme, 58 ans, douleur thoracique intense et sueurs froides depuis 10 minutes. »",
-    priority: "Priorité critique"
-  };
+  useEffect(() => {
+    if (!connected) return undefined;
+    const unsubAlerts = subscribe("/topic/alerts", () => loadData());
+    const unsubInterventions = subscribe("/topic/interventions", () => loadData());
+    return () => { unsubAlerts(); unsubInterventions(); };
+  }, [connected, subscribe, loadData]);
 
-  // Liste des ambulances de test pour le panel d'affectation
-  const mockAmbulances = [
-    { id: "amb-1", name: "Ambulance A1 - Donka", distance: "1.2 km (3 min)", status: "Disponible" },
-    { id: "amb-2", name: "Ambulance A2 - Dixinn", distance: "2.5 km (6 min)", status: "Disponible" },
-    { id: "amb-3", name: "Ambulance A3 - Kaloum", distance: "4.1 km (9 min)", status: "Disponible" }
-  ];
+  const availableAmbulances = ambulances.filter((a) => isAmbulanceAssignable(a.status));
+  const assignedAmb = intervention?.ambulanceId
+    ? ambulances.find((a) => a.id === intervention.ambulanceId)
+    : null;
+  const mapAmbulances = assignedAmb ? [assignedAmb] : availableAmbulances.slice(0, 5);
 
-  const handleAssign = (ambName) => {
-    setAssignedAmbulance(ambName);
+  const patientName = alert
+    ? `${alert.citizenFirstName || ""} ${alert.citizenLastName || ""}`.trim() || "Citoyen"
+    : "";
+  const patientInitials = patientName.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase();
+  const patientMeta = [
+    alert?.bloodGroup ? `Groupe ${alert.bloodGroup}` : null,
+    alert?.citizenPhone || null,
+  ].filter(Boolean).join(" · ");
+
+  const handleAssign = async (amb) => {
+    if (!alert || !intervention || !isAmbulanceAssignable(amb.status)) return;
+    setAssignedAmbulance(amb.registrationNumber);
     setDispatchStatus("assigning");
-    
-    setTimeout(() => {
+    try {
+      await validateAndAssignAmbulance(alert, intervention, amb.id);
       setDispatchStatus("success");
+      toast.success(`Ambulance ${amb.registrationNumber} déployée.`);
       setTimeout(() => {
-        setDispatchStatus("idle");
-        navigate("/medical-center"); // Retourner au tableau de bord
-      }, 1500);
-    }, 1800);
+        navigate(`/medical-center/alerts/${alertId}/tracking`);
+      }, 1200);
+    } catch (err) {
+      setDispatchStatus("idle");
+      toast.error(err.response?.data?.message || "Échec de l'affectation.");
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="alert-detail-app-wrapper d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Chargement...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !alert) {
+    return (
+      <div className="alert-detail-app-wrapper container py-5">
+        <div className="alert alert-danger">{error || "Alerte introuvable."}</div>
+        <button type="button" className="btn btn-outline-secondary" onClick={() => navigate("/medical-center")}>
+          Retour au tableau de bord
+        </button>
+      </div>
+    );
+  }
+
+  const alertCode = formatAlertCode(alert.id);
+  const alreadyAssigned = Boolean(intervention?.ambulanceRegistrationNumber);
 
   return (
     <div className="alert-detail-app-wrapper">
-      
-      {/* HEADER DE LA PAGE (Plein Écran Desktop & Mobile) */}
       <div className="detail-page-header">
         <div className="header-left-group">
-          <button 
-            className="back-circle-btn" 
-            onClick={() => navigate("/medical-center")}
-            aria-label="Retour au tableau de bord"
-          >
+          <button type="button" className="back-circle-btn" onClick={() => navigate("/medical-center")} aria-label="Retour">
             <BackArrowIcon />
           </button>
-          
           <div className="header-title-section">
-            <h1 className="alert-id-title">Alerte {alertData.code}</h1>
-            <span className="critical-priority-badge">• {alertData.priority}</span>
+            <h1 className="alert-id-title">Alerte {alertCode}</h1>
+            <span className="critical-priority-badge">• {priorityFullLabel(alert.priority)}</span>
           </div>
         </div>
-
         <div className="header-right-group">
           <span className="clock-pill">{time}</span>
         </div>
       </div>
 
-      {/* GRILLE PRINCIPALE (2 colonnes sur desktop, 1 colonne sur mobile) */}
       <div className="detail-page-content-grid">
-        
-        {/* COLONNE GAUCHE : Cartes d'informations */}
         <div className="detail-left-column">
-          
-          {/* CARTE PATIENT */}
           <div className="detail-info-card card-patient">
             <div className="patient-card-header">
-              <div className="patient-avatar-box">
-                {alertData.patientAvatar}
-              </div>
+              <div className="patient-avatar-box">{patientInitials || "?"}</div>
               <div className="patient-text-info">
-                <h2 className="patient-name">{alertData.patientName}</h2>
-                <span className="patient-meta">{alertData.patientDetails}</span>
+                <h2 className="patient-name">{patientName}</h2>
+                <span className="patient-meta">{patientMeta || "Informations patient limitées"}</span>
               </div>
-              <button className="phone-call-btn" aria-label="Appeler le patient">
-                <PhoneIcon />
-              </button>
+              {alert.citizenPhone && (
+                <a href={`tel:${alert.citizenPhone}`} className="phone-call-btn" aria-label="Appeler le patient">
+                  <PhoneIcon />
+                </a>
+              )}
             </div>
-
             <div className="patient-address-row">
-              <div className="pin-icon-wrapper">
-                <MapPinIcon />
-              </div>
+              <div className="pin-icon-wrapper"><MapPinIcon /></div>
               <div className="address-text-group">
-                <div className="address-line">{alertData.address}</div>
-                <div className="gps-line">{alertData.gps}</div>
+                <div className="address-line">{alert.address || "Adresse non renseignée"}</div>
+                <div className="gps-line">{formatGpsCoordinates(alert.latitude, alert.longitude)}</div>
               </div>
             </div>
           </div>
 
-          {/* CARTE NATURE DE L'URGENCE */}
           <div className="detail-info-card card-urgency-nature">
             <h3 className="card-section-label">Nature de l'urgence</h3>
-            
             <div className="urgency-type-row">
-              <div className="heart-icon-wrapper">
-                <HeartIcon />
-              </div>
-              <span className="urgency-type-text">{alertData.urgencyTitle}</span>
+              <div className="heart-icon-wrapper"><HeartIcon /></div>
+              <span className="urgency-type-text">{alert.categoryName || "Urgence médicale"}</span>
             </div>
-
-            <div className="quote-description-box">
-              {alertData.urgencyDescription}
-            </div>
+            {alert.description && (
+              <div className="quote-description-box">{alert.description}</div>
+            )}
           </div>
 
-          {/* CARTE CARTE DE POSITION GPS (Style Mockup Image) */}
-          <div className="detail-info-card card-map-mockup">
-            <div className="map-view-grid">
-              <div className="map-horizontal-grid-line"></div>
-              <div className="map-center-pulse-dot"></div>
-            </div>
+          <div className="detail-info-card card-map-mockup" style={{ padding: 0, overflow: "hidden", minHeight: "280px" }}>
+            <RegulationMap alerts={[alert]} ambulances={mapAmbulances} tall />
           </div>
 
-          {/* BOUTON D'ACTION PRINCIPAL MOBILE (Affiché en bas à gauche de la colonne sur desktop, ou en bas fixe sur mobile) */}
           <div className="mobile-action-button-container">
-            <button 
+            <button
+              type="button"
               className="action-assign-btn"
-              onClick={() => navigate(`/medical-center/alerts/${alertId || 'alert-1'}/assign`)}
+              onClick={() => navigate(`/medical-center/alerts/${alertId}/assign`)}
             >
               <AmbulanceIcon />
-              <span>Affecter une ambulance</span>
+              <span>{alreadyAssigned ? "Réaffecter une ambulance" : "Affecter une ambulance"}</span>
             </button>
+            {alreadyAssigned && (
+              <button
+                type="button"
+                className="action-assign-btn mt-2"
+                style={{ background: "var(--color-dashboard-blue, #0A55C4)" }}
+                onClick={() => navigate(`/medical-center/alerts/${alertId}/tracking`)}
+              >
+                Suivre l'intervention
+              </button>
+            )}
           </div>
-
         </div>
 
-        {/* COLONNE DROITE : Panel d'affectation des secours (Desktop uniquement, caché ou tiroir sur mobile) */}
         <div className="detail-right-column">
-          
           <div className="assignment-panel-card">
-            <h3 className="assignment-panel-title">Sélectionner une ambulance à déployer</h3>
-            
-            {dispatchStatus === "idle" && (
-              <div className="amb-assignment-list">
-                {mockAmbulances.map((amb) => (
-                  <div 
-                    key={amb.id} 
-                    className="amb-assignment-item"
-                    onClick={() => handleAssign(amb.name)}
-                  >
-                    <div className="amb-item-left">
-                      <div className="amb-avatar-box">🚑</div>
-                      <div className="amb-info-text">
-                        <span className="amb-name-label">{amb.name}</span>
-                        <span className="amb-distance-label">{amb.distance}</span>
-                      </div>
-                    </div>
-                    <button className="amb-deploy-action-btn">
-                      Déployer
-                    </button>
+            <h3 className="assignment-panel-title">
+              {alreadyAssigned ? "Ambulance affectée" : "Sélectionner une ambulance à déployer"}
+            </h3>
+
+            {alreadyAssigned && dispatchStatus === "idle" && (
+              <div className="amb-assignment-item" style={{ cursor: "default" }}>
+                <div className="amb-item-left">
+                  <div className="amb-avatar-box">🚑</div>
+                  <div className="amb-info-text">
+                    <span className="amb-name-label">{intervention.ambulanceRegistrationNumber}</span>
+                    <span className="amb-distance-label">{intervention.medicalCenterName || "Centre médical"}</span>
                   </div>
-                ))}
+                </div>
+                <button
+                  type="button"
+                  className="amb-deploy-action-btn"
+                  onClick={() => navigate(`/medical-center/alerts/${alertId}/tracking`)}
+                >
+                  Suivre
+                </button>
+              </div>
+            )}
+
+            {!alreadyAssigned && dispatchStatus === "idle" && (
+              <div className="amb-assignment-list">
+                {availableAmbulances.length === 0 ? (
+                  <p className="text-secondary small px-2">Aucune ambulance disponible pour le moment.</p>
+                ) : (
+                  availableAmbulances.map((amb) => (
+                    <div key={amb.id} className="amb-assignment-item" onClick={() => handleAssign(amb)}>
+                      <div className="amb-item-left">
+                        <div className="amb-avatar-box">🚑</div>
+                        <div className="amb-info-text">
+                          <span className="amb-name-label">{amb.registrationNumber}</span>
+                          <span className="amb-distance-label">
+                            {amb.medicalCenterName || "Centre"} — {ambulanceStatusLabel(amb.status)}
+                          </span>
+                        </div>
+                      </div>
+                      <button type="button" className="amb-deploy-action-btn">Déployer</button>
+                    </div>
+                  ))
+                )}
               </div>
             )}
 
             {dispatchStatus === "assigning" && (
               <div className="assigning-state-overlay">
-                <div className="spinner-loader"></div>
+                <div className="spinner-loader" />
                 <h4>Liaison radio établie...</h4>
                 <p>Transmission de la fiche d'incident à {assignedAmbulance}</p>
               </div>
@@ -228,30 +296,13 @@ export default function AlertDetailPage() {
             {dispatchStatus === "success" && (
               <div className="assigning-state-overlay success">
                 <div className="success-badge-circle">✓</div>
-                <h4>Ambulance Déployée !</h4>
+                <h4>Ambulance déployée</h4>
                 <p>{assignedAmbulance} est en route vers la position GPS.</p>
               </div>
             )}
           </div>
-
         </div>
-
       </div>
-
-      {/* Étiquette flottante "2 • Détail alerte" */}
-      {showLabel && (
-        <div className="floating-mockup-label shadow-premium">
-          <span>2 • Détail alerte</span>
-          <button 
-            className="label-close"
-            onClick={() => setShowLabel(false)}
-            aria-label="Fermer"
-          >
-            <CloseIcon />
-          </button>
-        </div>
-      )}
-
     </div>
   );
 }

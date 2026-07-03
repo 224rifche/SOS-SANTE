@@ -1,13 +1,18 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import SOSPage from "../pages/citizen/SOSPage";
+import WelcomePage from "../pages/welcome/WelcomePage";
 
 /**
  * Route de redirection intelligente a l'atterrissage sur la racine (/).
- * Evite les boucles de redirection et oriente chaque utilisateur vers son dashboard dedie.
+ * Public si non connecte (WelcomePage), sinon oriente chaque utilisateur
+ * vers son dashboard dedie selon son role.
  */
 export default function HomeRedirect() {
-  const { hasRole } = useAuth();
+  const { isAuthenticated, hasRole } = useAuth();
+
+  if (!isAuthenticated) {
+    return <WelcomePage />;
+  }
 
   if (hasRole("ADMIN")) {
     return <Navigate to="/admin" replace />;
@@ -16,12 +21,11 @@ export default function HomeRedirect() {
     return <Navigate to="/medical-center" replace />;
   }
   if (hasRole("DOCTOR")) {
-    return <Navigate to="/doctor" replace />;
+    return <Navigate to="/doctor/dashboard" replace />;
   }
   if (hasRole("AMBULANCIER")) {
     return <Navigate to="/ambulancier" replace />;
   }
-  
-  // Par defaut, le Citoyen (ou si aucun autre role specifique n'est attribue)
-  return <SOSPage />;
+
+  return <Navigate to="/citizen" replace />;
 }

@@ -56,7 +56,8 @@ public class InterventionService {
         ALLOWED_TRANSITIONS.put(InterventionStatus.ALERTE_CREEE, EnumSet.of(InterventionStatus.EN_ATTENTE_VALIDATION));
         ALLOWED_TRANSITIONS.put(InterventionStatus.EN_ATTENTE_VALIDATION, EnumSet.of(InterventionStatus.VALIDEE, InterventionStatus.REJETEE));
         ALLOWED_TRANSITIONS.put(InterventionStatus.VALIDEE, EnumSet.of(InterventionStatus.AMBULANCE_AFFECTEE));
-        ALLOWED_TRANSITIONS.put(InterventionStatus.AMBULANCE_AFFECTEE, EnumSet.of(InterventionStatus.AMBULANCE_EN_ROUTE));
+        // Auto-transition incluse pour permettre la reaffectation a une autre ambulance tant que le vehicule n'est pas encore en route.
+        ALLOWED_TRANSITIONS.put(InterventionStatus.AMBULANCE_AFFECTEE, EnumSet.of(InterventionStatus.AMBULANCE_AFFECTEE, InterventionStatus.AMBULANCE_EN_ROUTE));
         ALLOWED_TRANSITIONS.put(InterventionStatus.AMBULANCE_EN_ROUTE, EnumSet.of(InterventionStatus.ARRIVEE_SUR_LES_LIEUX));
         ALLOWED_TRANSITIONS.put(InterventionStatus.ARRIVEE_SUR_LES_LIEUX, EnumSet.of(InterventionStatus.PATIENT_PRIS_EN_CHARGE));
         ALLOWED_TRANSITIONS.put(InterventionStatus.PATIENT_PRIS_EN_CHARGE, EnumSet.of(InterventionStatus.TRANSPORT_VERS_CENTRE));

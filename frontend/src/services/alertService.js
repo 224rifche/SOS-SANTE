@@ -15,4 +15,14 @@ export const alertService = {
     const { data } = await apiClient.get(`/alerts/${id}`);
     return data;
   },
+
+  async listAll(status) {
+    const { data } = await apiClient.get("/alerts", { params: { status } });
+    return data;
+  },
+
+  async updateStatus(id, status) {
+    const { data } = await apiClient.patch(`/alerts/${id}/status`, { status });
+    return data;
+  },
 };
