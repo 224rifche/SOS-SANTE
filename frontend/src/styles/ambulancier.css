@@ -10,7 +10,7 @@
   position: relative;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: #2c3e50;
-  padding-bottom: 80px; /* Espace pour la barre de navigation */
+  padding-bottom: 24px;
 }
 
 /* Header */
@@ -987,5 +987,125 @@
   color: #2E7D32;
 }
 
+/* Layout ambulancier (sans Navbar globale) */
+.amb-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #F5F7F8;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.amb-layout-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: #0B1524;
+  color: white;
+}
+
+.amb-layout-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.amb-layout-brand-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #E53935;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.75rem;
+}
+
+.amb-layout-brand-name {
+  display: block;
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1.1;
+}
+
+.amb-layout-brand-sub {
+  display: block;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.amb-layout-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.amb-layout-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.amb-layout-logout {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: white;
+  font-size: 0.72rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.amb-layout-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.amb-layout-main--fullscreen {
+  max-width: none;
+}
+
+.amb-layout-bottom-nav {
+  display: flex;
+  border-top: 1px solid #E2E8F0;
+  background: white;
+  padding: 8px 12px 12px;
+  gap: 8px;
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+}
+
+.amb-layout-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #64748B;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.amb-layout-nav-item.active {
+  color: #135431;
+  background: #E8F5E9;
+}
 
 

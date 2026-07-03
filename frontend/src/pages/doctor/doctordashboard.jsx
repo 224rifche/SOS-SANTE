@@ -1,37 +1,110 @@
-import React from 'react';
-// On remonte de 2 dossiers (doctor puis pages) pour aller chercher les composants et les données
-import Header from '../../components/doctor/Header';
-import Stats from '../../components/doctor/Stats';
-import EmergencyCard from '../../components/doctor/EmergencyCard';
-import { patientsData } from '../../Data/Patients.js';
+import { useEffect, useState, useCallback } from "react";
+import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
+import { useWebSocket } from "../../contexts/WebSocketContext";
+import { doctorService } from "../../services/doctorService";
+import { statusLabel } from "../medical-center/regulationUtils";
 
 export default function DoctorDashboard() {
-    return (
-        <div className="min-h-screen bg-gray-100 font-sans antialiased md:py-10">
-            <div className="mx-auto max-w-md bg-white min-h-screen shadow-none md:max-w-5xl md:min-h-[800px] md:rounded-3xl md:shadow-xl overflow-hidden flex flex-col justify-between">
-                <div>
-                    {/* Top Banner (Vert) */}
-                    <div className="bg-[#007A78] p-6 rounded-b-3xl md:rounded-t-3xl md:rounded-b-none md:p-8">
-                        <Header />
-                        <Stats />
-                    </div>
+  const { connected, subscribe } = useWebSocket();
+  const [profile, setProfile] = useState(null);
+  const [interventions, setInterventions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-                    {/* Liste Patients */}
-                    <div className="p-6 md:p-8">
-                        <h2 className="text-lg font-bold text-gray-800 mb-4 md:text-xl">Urgences entrantes</h2>
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            {patientsData.map((patient) => (
-                                <EmergencyCard key={patient.id} patient={patient} />
-                            ))}
-                        </div>
-                    </div>
-                </div>
+  useEffect(() => {
+    doctorService.getMyProfile()
+      .then(setProfile)
+      .catch(() => toast.error("Impossible de charger votre profil médecin."))
+      .finally(() => setLoading(false));
+  }, []);
 
-                {/* Footer Mobile */}
-                <div className="text-center py-4 bg-gray-50 border-t text-xs font-semibold text-gray-500 md:hidden">
-                    Dashboard médecin
-                </div>
+  const upsertIntervention = useCallback((item) => {
+    if (!profile?.id || item.doctorId !== profile.id) return;
+    setInterventions((prev) => {
+      const map = new Map(prev.map((i) => [i.id, i]));
+      map.set(item.id, item);
+      return Array.from(map.values()).sort(
+        (a, b) => new Date(b.startedAt || 0) - new Date(a.startedAt || 0)
+      );
+    });
+  }, [profile?.id]);
+
+  useEffect(() => {
+    if (!connected || !profile?.id) return undefined;
+    return subscribe("/topic/interventions", upsertIntervention);
+  }, [connected, subscribe, profile?.id, upsertIntervention]);
+
+  const toggleAvailability = async () => {
+    if (!profile?.id) return;
+    try {
+      const updated = await doctorService.updateAvailability(profile.id, !profile.available);
+      setProfile(updated);
+      toast.success(updated.available ? "Vous êtes disponible." : "Vous êtes indisponible.");
+    } catch {
+      toast.error("Impossible de mettre à jour votre disponibilité.");
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center py-5 text-secondary">Chargement...</div>;
+  }
+
+  return (
+    <>
+      <div className="doc-layout-header" style={{ borderRadius: "0 0 20px 20px", margin: "-20px -16px 20px" }}>
+        <div style={{ width: "100%" }}>
+          <p className="mb-1 opacity-75 small">{profile?.medicalCenterName || "Centre médical"}</p>
+          <h1 className="h4 fw-bold mb-3">
+            Dr. {profile?.userFirstName} {profile?.userLastName}
+          </h1>
+          <div className="doc-stats-row">
+            <div className="doc-stat-card">
+              <div className="doc-stat-value">{interventions.length}</div>
+              <div className="doc-stat-label">Interventions assignées</div>
             </div>
+            <div className="doc-stat-card">
+              <div className="doc-stat-value">{profile?.specialty?.slice(0, 8) || "—"}</div>
+              <div className="doc-stat-label">Spécialité</div>
+            </div>
+            <div className="doc-stat-card">
+              <div className="doc-stat-value">{profile?.available ? "Oui" : "Non"}</div>
+              <div className="doc-stat-label">Disponible</div>
+            </div>
+          </div>
+          <button type="button" className="doc-btn mt-2" onClick={toggleAvailability}>
+            {profile?.available ? "Passer indisponible" : "Passer disponible"}
+          </button>
         </div>
-    );
+      </div>
+
+      <h2 className="doc-page-title">Urgences assignées</h2>
+      {!connected && (
+        <p className="text-secondary small mb-3">Connexion temps réel en cours...</p>
+      )}
+
+      {interventions.length === 0 ? (
+        <div className="doc-card text-center text-secondary py-4">
+          <p className="mb-2">Aucune intervention assignée pour le moment.</p>
+          <p className="small mb-0">Les nouvelles affectations apparaîtront ici en temps réel.</p>
+        </div>
+      ) : (
+        interventions.map((item) => (
+          <Link key={item.id} to={`/doctor/intervention/${item.id}`} className="doc-card doc-card-link">
+            <div className="d-flex justify-content-between align-items-start gap-2">
+              <div>
+                <p className="fw-bold mb-1">
+                  Intervention #{String(item.id).substring(0, 8).toUpperCase()}
+                </p>
+                <p className="small text-secondary mb-1">{item.medicalCenterName}</p>
+                {item.ambulanceRegistrationNumber && (
+                  <p className="small text-secondary mb-0">🚑 {item.ambulanceRegistrationNumber}</p>
+                )}
+              </div>
+              <span className="doc-badge">{statusLabel(item.currentStatus)}</span>
+            </div>
+          </Link>
+        ))
+      )}
+    </>
+  );
 }

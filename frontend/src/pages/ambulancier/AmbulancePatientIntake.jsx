@@ -24,35 +24,25 @@ export default function AmbulancePatientIntake() {
 
   // Confirmer l'intake et démarrer le transport du patient
   const handleStartTransport = async () => {
+    if (!id) {
+      toast.error("Identifiant de mission manquant.");
+      return;
+    }
     setLoading(true);
-    const isDev = window.location.pathname.includes("/dev");
-    
     try {
-      if (isDev || !id || id.startsWith("mock")) {
-        // Mode démo
-        setTimeout(() => {
-          toast.success("Constantes enregistrées. Départ vers le centre médical.");
-          navigate(isDev ? "/dev/itineraire" : "/ambulancier/itineraire");
-          setLoading(false);
-        }, 800);
-      } else {
-        // Appeler le service réel pour passer à l'état TRANSPORT_VERS_CENTRE
-        // Note : En production, les constantes vitales sont transmises dans le rapport
-        await interventionService.updateStatus(id, {
-          newStatus: "TRANSPORT_VERS_CENTRE"
-        });
-        toast.success("Patient pris en charge. Transport vers l'hôpital démarré.");
-        navigate(`/ambulancier/itineraire`);
-        setLoading(false);
-      }
+      await interventionService.updateStatus(id, {
+        newStatus: "TRANSPORT_VERS_CENTRE",
+      });
+      toast.success("Patient pris en charge. Transport vers l'hôpital démarré.");
+      navigate("/ambulancier/itineraire");
     } catch (err) {
       toast.error(err.response?.data?.message || "Erreur lors de la validation de la prise en charge.");
+    } finally {
       setLoading(false);
     }
   };
 
-  const isDevPath = window.location.pathname.includes("/dev");
-  const backTarget = isDevPath ? "/dev/mission" : `/ambulancier/mission/${id || ""}`;
+  const backTarget = `/ambulancier/mission/${id || ""}`;
 
   return (
     <div className="amb-detail-view-container">

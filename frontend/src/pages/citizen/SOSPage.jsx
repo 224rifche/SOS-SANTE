@@ -1,38 +1,42 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import SOSButton from "../../components/business/SOSButton";
 import { useGeolocation } from "../../hooks/useGeolocation";
 import { alertService } from "../../services/alertService";
-import { useNavigate } from "react-router-dom";
+import { emergencyCategoryService } from "../../services/emergencyCategoryService";
 
 const alertSchema = z.object({
-  categoryId: z.coerce.number().min(1, "Veuillez selectionner une categorie"),
+  categoryId: z.coerce.number().min(1, "Sélectionnez une catégorie"),
   description: z.string().optional(),
 });
-
-// NOTE : en V1, la liste des categories sera chargee depuis GET /api/v1/emergency-categories.
-const CATEGORIES_PLACEHOLDER = [
-  { id: 1, name: "Accident de la route" },
-  { id: 2, name: "Malaise / Perte de connaissance" },
-  { id: 3, name: "Accouchement" },
-  { id: 4, name: "Blessure grave / Hemorragie" },
-];
 
 export default function SOSPage() {
   const { position, error: geoError, loading: geoLoading, requestLocation } = useGeolocation();
   const [submitting, setSubmitting] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const navigate = useNavigate();
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
     resolver: zodResolver(alertSchema),
   });
 
+  const selectedCategoryId = watch("categoryId");
+
+  useEffect(() => {
+    requestLocation();
+    emergencyCategoryService.getAllCategories()
+      .then(setCategories)
+      .catch(() => toast.error("Impossible de charger les catégories."))
+      .finally(() => setCategoriesLoading(false));
+  }, [requestLocation]);
+
   const onSubmit = async (formData) => {
     if (!position) {
-      toast.error("Position GPS requise. Veuillez l'activer avant d'envoyer l'alerte.");
+      toast.error("Activez la géolocalisation avant d'envoyer l'alerte.");
       return;
     }
     setSubmitting(true);
@@ -43,46 +47,69 @@ export default function SOSPage() {
         longitude: position.longitude,
         description: formData.description,
       });
-      toast.success("Alerte envoyee. Les secours ont ete notifies.");
-      navigate(`/citizen/tracking/${alert.id}`);
+      toast.success("Alerte envoyée. Les secours ont été notifiés.");
+      navigate(`/citizen/alert/${alert.id}/confirmation`);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Erreur lors de l'envoi de l'alerte.");
+      toast.error(err.response?.data?.message || "Erreur lors de l'envoi.");
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="sos-page">
-      <h1>Declencher une urgence</h1>
+    <div style={{ background: "linear-gradient(180deg, #0b1524 0%, #12213a 40%, #f4f6f9 40%)", minHeight: "100vh", padding: "20px 16px 100px" }}>
+      <Link to="/citizen" className="text-white text-decoration-none small d-inline-block mb-4">← Retour</Link>
 
-      <SOSButton disabled={submitting} onTrigger={() => { requestLocation(); }} />
+      <div className="text-center text-white mb-4">
+        <div className="cit-sos-btn-large mx-auto mb-3" style={{ width: "140px", height: "140px", cursor: "default" }}>
+          <span style={{ fontSize: "1.6rem" }}>SOS</span>
+          <span>URGENCE</span>
+        </div>
+        <h1 className="h5 fw-bold">Déclencher une urgence</h1>
+        <p className="small opacity-75 mb-0">Votre position sera transmise au centre de régulation</p>
+      </div>
 
-      {geoLoading && <p>Recuperation de votre position...</p>}
-      {geoError && <p className="field-error">{geoError}</p>}
-      {position && <p>Position detectee ({position.latitude.toFixed(5)}, {position.longitude.toFixed(5)})</p>}
+      <div className="cit-card">
+        {geoLoading && <p className="cit-card-sub">Localisation en cours...</p>}
+        {geoError && <p className="text-danger small">{geoError}</p>}
+        {position && (
+          <p className="small text-success mb-3">
+            ✓ GPS : {position.latitude.toFixed(5)}, {position.longitude.toFixed(5)}
+          </p>
+        )}
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <label>
-          Categorie de l'urgence
-          <select {...register("categoryId")} defaultValue="">
-            <option value="" disabled>Selectionner...</option>
-            {CATEGORIES_PLACEHOLDER.map((cat) => (
-              <option key={cat.id} value={cat.id}>{cat.name}</option>
-            ))}
-          </select>
-          {errors.categoryId && <span className="field-error">{errors.categoryId.message}</span>}
-        </label>
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
+          <p className="cit-section-label">Type d'urgence</p>
+          {categoriesLoading ? (
+            <p className="cit-card-sub">Chargement...</p>
+          ) : (
+            <div className="cit-grid-2 mb-3">
+              {categories.map((cat) => (
+                <label
+                  key={cat.id}
+                  className="cit-card mb-0"
+                  style={{
+                    cursor: "pointer",
+                    borderColor: Number(selectedCategoryId) === cat.id ? "#e53935" : undefined,
+                    background: Number(selectedCategoryId) === cat.id ? "rgba(229,57,53,0.06)" : undefined,
+                  }}
+                >
+                  <input type="radio" value={cat.id} className="d-none" {...register("categoryId")} onChange={() => setValue("categoryId", cat.id, { shouldValidate: true })} />
+                  <span className="cit-card-title" style={{ fontSize: "0.8rem" }}>{cat.name}</span>
+                </label>
+              ))}
+            </div>
+          )}
+          {errors.categoryId && <p className="text-danger small">{errors.categoryId.message}</p>}
 
-        <label>
-          Description (optionnelle)
-          <textarea {...register("description")} rows={3} />
-        </label>
+          <label className="cit-form-label">Description (optionnelle)</label>
+          <textarea className="cit-form-textarea" rows={3} placeholder="Décrivez la situation..." {...register("description")} />
 
-        <button type="submit" disabled={submitting || !position}>
-          {submitting ? "Envoi en cours..." : "Confirmer et transmettre l'alerte"}
-        </button>
-      </form>
+          <button type="submit" className="cit-btn-primary" disabled={submitting || !position || categoriesLoading}>
+            {submitting ? "Envoi..." : "Envoyer le SOS maintenant"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

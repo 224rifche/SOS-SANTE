@@ -1,6 +1,7 @@
 package com.wonmally.app.dashboard.controller;
 
 import com.wonmally.app.dashboard.dto.DashboardStatsDTO;
+import com.wonmally.app.dashboard.dto.PublicStatsDTO;
 import com.wonmally.app.dashboard.service.DashboardService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -14,13 +15,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/dashboard")
 @RequiredArgsConstructor
 @Tag(name = "Dashboard", description = "Statistiques de pilotage de la plateforme")
-@PreAuthorize("hasAnyRole('ADMIN', 'MEDICAL_CENTER')")
 public class DashboardController {
 
     private final DashboardService dashboardService;
 
     @GetMapping("/stats")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICAL_CENTER')")
     public ResponseEntity<DashboardStatsDTO> getStats() {
         return ResponseEntity.ok(dashboardService.getStats());
+    }
+
+    @GetMapping("/public-stats")
+    public ResponseEntity<PublicStatsDTO> getPublicStats() {
+        return ResponseEntity.ok(dashboardService.getPublicStats());
     }
 }

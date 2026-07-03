@@ -4,6 +4,7 @@ import com.wonmally.app.alert.repository.AlertRepository;
 import com.wonmally.app.ambulance.repository.AmbulanceRepository;
 import com.wonmally.app.common.InterventionStatus;
 import com.wonmally.app.dashboard.dto.DashboardStatsDTO;
+import com.wonmally.app.dashboard.dto.PublicStatsDTO;
 import com.wonmally.app.intervention.repository.InterventionRepository;
 import com.wonmally.app.user.entity.User;
 import com.wonmally.app.user.repository.UserRepository;
@@ -69,6 +70,20 @@ public class DashboardService {
             .activeInterventions(interventionRepository.countByArchivedFalse())
             .totalUsers(userRepository.count())
             .usersByRole(usersByRole)
+            .build();
+    }
+
+    /**
+     * Statistiques publiques, sans authentification, pour la landing page.
+     * Volontairement limitees a des comptages agreges, sans donnee sensible
+     * (aucun detail patient, aucune repartition par role utilisateur).
+     */
+    @Transactional(readOnly = true)
+    public PublicStatsDTO getPublicStats() {
+        return PublicStatsDTO.builder()
+            .totalAlertsHandled(alertRepository.count())
+            .availableAmbulances(ambulanceRepository.countByStatus("AVAILABLE"))
+            .activeInterventions(interventionRepository.countByArchivedFalse())
             .build();
     }
 }

@@ -94,3 +94,396 @@ button:disabled {
   background-color: var(--color-orange-warning);
   font-size: 1.1rem;
 }
+
+
+/* ============================================================
+   Auth split-screen - panneau signature (ligne de pouls)
+   ============================================================ */
+/* ========== Auth Nhellan Emergency ========== */
+
+.auth-ne-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 992px) {
+  .auth-ne-wrapper { flex-direction: row; }
+}
+
+.auth-ne-brand {
+  flex: 1;
+  background: linear-gradient(160deg, #0b1524 0%, #12213a 55%, #1a2d4a 100%);
+  color: white;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 280px;
+}
+
+.auth-ne-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.auth-ne-logo-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  background: #e53935;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: white;
+}
+
+.auth-ne-logo strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.auth-ne-logo small {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.6;
+  letter-spacing: 0.04em;
+}
+
+.auth-ne-badge {
+  display: inline-block;
+  background: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.auth-ne-brand-content h1 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  margin: 0 0 12px;
+  line-height: 1.2;
+}
+
+.auth-ne-brand-content p {
+  color: rgba(255, 255, 255, 0.65);
+  max-width: 400px;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+.auth-ne-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.auth-ne-features li {
+  padding: 8px 0;
+  padding-left: 24px;
+  position: relative;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+}
+
+.auth-ne-features li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #22c55e;
+  font-weight: 700;
+}
+
+.auth-ne-pulse {
+  width: 100%;
+  max-width: 400px;
+  opacity: 0.7;
+  margin-top: 24px;
+}
+
+.auth-ne-form-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  background: #f4f6f9;
+}
+
+.auth-ne-form-card {
+  width: 100%;
+  max-width: 400px;
+  background: white;
+  border-radius: 20px;
+  padding: 32px 28px;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
+}
+
+.auth-ne-form-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0 0 4px;
+  color: #0f172a;
+}
+
+.auth-ne-form-sub {
+  color: #64748b;
+  font-size: 0.88rem;
+  margin: 0 0 24px;
+}
+
+.auth-ne-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.auth-ne-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  margin-bottom: 16px;
+  background: #fafbfc;
+  transition: border-color 0.15s;
+}
+
+.auth-ne-input:focus {
+  outline: none;
+  border-color: #e53935;
+  box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.1);
+}
+
+.auth-ne-error {
+  color: #e53935;
+  font-size: 0.78rem;
+  margin: -12px 0 12px;
+}
+
+.auth-ne-submit {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #e53935, #c62828);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: opacity 0.15s;
+}
+
+.auth-ne-submit:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.auth-ne-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-ne-footer {
+  text-align: center;
+  margin: 20px 0 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.auth-ne-footer a {
+  color: #e53935;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-ne-pulse path {
+  stroke-dasharray: 900;
+  stroke-dashoffset: 900;
+  animation: pulse-draw 2.8s ease-in-out infinite;
+}
+
+.auth-split {
+  min-height: 100vh;
+}
+
+.auth-split__brand {
+  background: radial-gradient(circle at 20% 20%, rgba(30, 136, 229, 0.35), transparent 55%),
+              radial-gradient(circle at 80% 75%, rgba(229, 57, 53, 0.30), transparent 50%),
+              #0B1524;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-split__brand-content {
+  z-index: 1;
+  position: relative;
+}
+
+.pulse-line {
+  width: 100%;
+  max-width: 460px;
+}
+
+.pulse-line path {
+  fill: none;
+  stroke: var(--color-red-emergency);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 900;
+  stroke-dashoffset: 900;
+  animation: pulse-draw 2.8s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px rgba(229, 57, 53, 0.55));
+}
+
+@keyframes pulse-draw {
+  0%   { stroke-dashoffset: 900; opacity: 0.3; }
+  55%  { stroke-dashoffset: 0;   opacity: 1; }
+  100% { stroke-dashoffset: -900; opacity: 0.3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-line path {
+    animation: none;
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+/* ============================================================
+   Media Queries - Mobile First Responsive Design
+   ============================================================ */
+
+/* Téléphone (Portrait) - max 576px */
+@media (max-width: 575px) {
+  .auth-ne-wrapper {
+    flex-direction: column;
+  }
+
+  .auth-ne-brand {
+    min-height: 200px;
+    padding: 20px 16px;
+  }
+
+  .auth-ne-brand-content h1 {
+    font-size: 1.25rem;
+  }
+
+  .auth-ne-brand-content p {
+    font-size: 0.85rem;
+  }
+
+  .auth-ne-features {
+    display: none;
+  }
+
+  .auth-ne-pulse {
+    display: none;
+  }
+
+  .auth-ne-form-panel {
+    padding: 20px 16px;
+  }
+
+  .auth-ne-form-card {
+    padding: 24px 20px;
+    border-radius: 16px;
+  }
+
+  .auth-ne-form-title {
+    font-size: 1.25rem;
+  }
+
+  .auth-page, .sos-page {
+    margin: 1rem auto;
+    padding: 1rem;
+  }
+
+  .sos-button {
+    width: 140px;
+    height: 140px;
+    font-size: 1.25rem;
+  }
+}
+
+/* Tablette (Portrait) - 576px à 991px */
+@media (min-width: 576px) and (max-width: 991px) {
+  .auth-ne-wrapper {
+    flex-direction: column;
+  }
+
+  .auth-ne-brand {
+    min-height: 240px;
+    padding: 24px 20px;
+  }
+
+  .auth-ne-brand-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .auth-ne-form-panel {
+    padding: 24px 20px;
+  }
+
+  .auth-ne-form-card {
+    max-width: 480px;
+  }
+
+  .auth-page, .sos-page {
+    max-width: 540px;
+  }
+}
+
+/* Desktop - min 992px */
+@media (min-width: 992px) {
+  .auth-ne-wrapper {
+    flex-direction: row;
+  }
+
+  .auth-ne-brand {
+    min-height: 100vh;
+    padding: 48px 40px;
+  }
+
+  .auth-ne-brand-content h1 {
+    font-size: 2rem;
+  }
+
+  .auth-ne-form-panel {
+    padding: 48px 32px;
+  }
+
+  .auth-ne-form-card {
+    max-width: 420px;
+  }
+
+  .auth-page, .sos-page {
+    max-width: 480px;
+  }
+}
+
+/* Large Desktop - min 1200px */
+@media (min-width: 1200px) {
+  .auth-ne-brand {
+    padding: 56px 48px;
+  }
+
+  .auth-ne-brand-content h1 {
+    font-size: 2.25rem;
+  }
+
+  .auth-ne-form-card {
+    max-width: 440px;
+  }
+}

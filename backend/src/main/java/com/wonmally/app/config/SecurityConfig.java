@@ -29,13 +29,13 @@ import java.util.List;
 /**
  * Configuration centrale de Spring Security.
  *
- * Couches de sécurité (dans l'ordre d'exécution) :
- *   1. RateLimitFilter         — anti brute-force par IP sur /auth/login
- *   2. JwtAuthenticationFilter — validation du Bearer token sur chaque requête
- *   3. SecurityFilterChain     — autorisation RBAC par URL et méthode (@PreAuthorize)
+ * Couches de securite (dans l'ordre d'execution) :
+ *   1. RateLimitFilter         - anti brute-force par IP sur /auth/login
+ *   2. JwtAuthenticationFilter - validation du Bearer token sur chaque requete
+ *   3. SecurityFilterChain     - autorisation RBAC par URL et methode (@PreAuthorize)
  *
  * Architecture stateless (SessionCreationPolicy.STATELESS) : aucune session HTTP.
- * CORS configuré sur liste blanche explicite (pas de wildcard *).
+ * CORS configure sur liste blanche explicite (pas de wildcard *).
  */
 @Configuration
 @EnableWebSecurity
@@ -62,6 +62,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/v1/auth/**",
+                    "/api/v1/dashboard/public-stats",
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
                     "/ws/**",
