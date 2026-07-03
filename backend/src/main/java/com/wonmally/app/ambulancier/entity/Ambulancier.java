@@ -1,5 +1,6 @@
 package com.wonmally.app.ambulancier.entity;
 
+import com.wonmally.app.ambulance.entity.Ambulance;
 import com.wonmally.app.common.BaseEntity;
 import com.wonmally.app.medicalcenter.entity.MedicalCenter;
 import com.wonmally.app.user.entity.User;
@@ -33,4 +34,8 @@ public class Ambulancier extends BaseEntity {
     @Column(name = "current_status", nullable = false, length = 50)
     @Builder.Default
     private String currentStatus = "OFF_DUTY";
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "current_ambulance_id")
+    private Ambulance currentAmbulance;
 }

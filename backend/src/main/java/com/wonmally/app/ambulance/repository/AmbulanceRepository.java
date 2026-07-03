@@ -10,4 +10,5 @@ import java.util.UUID;
 public interface AmbulanceRepository extends JpaRepository<Ambulance, UUID>, JpaSpecificationExecutor<Ambulance> {
     List<Ambulance> findByMedicalCenterIdAndStatus(UUID medicalCenterId, String status);
     boolean existsByRegistrationNumberIgnoreCase(String registrationNumber);
+    long countByStatus(String status);
 }

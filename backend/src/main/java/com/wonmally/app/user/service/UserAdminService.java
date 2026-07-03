@@ -1,5 +1,6 @@
 package com.wonmally.app.user.service;
 
+import com.wonmally.app.audit.service.AuditService;
 import com.wonmally.app.exception.BadRequestException;
 import com.wonmally.app.exception.EmailAlreadyExistsException;
 import com.wonmally.app.exception.ResourceNotFoundException;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +33,7 @@ public class UserAdminService {
     private final RoleRepository roleRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final AuditService auditService;
 
     @Transactional(readOnly = true)
     public Page<UserAdminResponseDTO> listUsers(String roleName, Boolean enabled, String search, Pageable pageable) {
@@ -68,7 +71,9 @@ public class UserAdminService {
             .verified(true)
             .build();
 
-        return userMapper.toAdminResponse(userRepository.save(user));
+        User saved = userRepository.save(user);
+        logCurrentAdminAction("USER_CREATED", saved.getId());
+        return userMapper.toAdminResponse(saved);
     }
 
     @Transactional
@@ -80,7 +85,9 @@ public class UserAdminService {
         user.setLastName(dto.lastName());
         user.setPhone(dto.phone());
 
-        return userMapper.toAdminResponse(userRepository.save(user));
+        User saved = userRepository.save(user);
+        logCurrentAdminAction("USER_UPDATED", saved.getId());
+        return userMapper.toAdminResponse(saved);
     }
 
     @Transactional
@@ -89,7 +96,9 @@ public class UserAdminService {
             .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
 
         user.setEnabled(dto.enabled());
-        return userMapper.toAdminResponse(userRepository.save(user));
+        User saved = userRepository.save(user);
+        logCurrentAdminAction(dto.enabled() ? "USER_ENABLED" : "USER_DISABLED", saved.getId());
+        return userMapper.toAdminResponse(saved);
     }
 
     @Transactional
@@ -98,7 +107,9 @@ public class UserAdminService {
             .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
 
         user.setRoles(resolveRoles(dto.roleNames()));
-        return userMapper.toAdminResponse(userRepository.save(user));
+        User saved = userRepository.save(user);
+        logCurrentAdminAction("USER_ROLES_UPDATED", saved.getId());
+        return userMapper.toAdminResponse(saved);
     }
 
     @Transactional
@@ -110,6 +121,17 @@ public class UserAdminService {
         user.setDeletedAt(LocalDateTime.now());
         user.setEnabled(false);
         userRepository.save(user);
+        logCurrentAdminAction("USER_DELETED", id);
+    }
+
+    private void logCurrentAdminAction(String action, UUID entityId) {
+        try {
+            String adminEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+            User admin = userRepository.findByEmail(adminEmail).orElse(null);
+            auditService.logAction(action, admin, "USER", entityId);
+        } catch (Exception ignored) {
+            // L'audit ne doit jamais casser le flux principal
+        }
     }
 
     private Set<Role> resolveRoles(Set<String> roleNames) {

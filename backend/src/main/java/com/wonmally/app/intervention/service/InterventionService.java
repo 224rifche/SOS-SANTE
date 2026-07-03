@@ -2,16 +2,26 @@ package com.wonmally.app.intervention.service;
 
 import com.wonmally.app.ambulance.entity.Ambulance;
 import com.wonmally.app.ambulance.repository.AmbulanceRepository;
+import com.wonmally.app.ambulancier.entity.Ambulancier;
+import com.wonmally.app.ambulancier.repository.AmbulancierRepository;
+import com.wonmally.app.audit.service.AuditService;
 import com.wonmally.app.common.InterventionStatus;
 import com.wonmally.app.doctor.entity.Doctor;
 import com.wonmally.app.doctor.repository.DoctorRepository;
 import com.wonmally.app.exception.BadRequestException;
 import com.wonmally.app.exception.ResourceNotFoundException;
+import com.wonmally.app.intervention.dto.InterventionResponseDTO;
 import com.wonmally.app.intervention.dto.InterventionStatusUpdateRequest;
 import com.wonmally.app.intervention.entity.Intervention;
+import com.wonmally.app.intervention.mapper.InterventionMapper;
 import com.wonmally.app.intervention.repository.InterventionRepository;
+import com.wonmally.app.user.entity.User;
+import com.wonmally.app.user.repository.UserRepository;
 import com.wonmally.app.websocket.AlertWebSocketService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +29,7 @@ import java.time.LocalDateTime;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -35,14 +46,18 @@ public class InterventionService {
     private final AmbulanceRepository ambulanceRepository;
     private final DoctorRepository doctorRepository;
     private final AlertWebSocketService webSocketService;
+    private final AmbulancierRepository ambulancierRepository;
+    private final InterventionMapper interventionMapper;
+    private final UserRepository userRepository;
+    private final AuditService auditService;
 
-    /** Transitions autorisees de la machine a etats officielle du MVP. */
     private static final Map<InterventionStatus, Set<InterventionStatus>> ALLOWED_TRANSITIONS = new EnumMap<>(InterventionStatus.class);
     static {
         ALLOWED_TRANSITIONS.put(InterventionStatus.ALERTE_CREEE, EnumSet.of(InterventionStatus.EN_ATTENTE_VALIDATION));
         ALLOWED_TRANSITIONS.put(InterventionStatus.EN_ATTENTE_VALIDATION, EnumSet.of(InterventionStatus.VALIDEE, InterventionStatus.REJETEE));
         ALLOWED_TRANSITIONS.put(InterventionStatus.VALIDEE, EnumSet.of(InterventionStatus.AMBULANCE_AFFECTEE));
-        ALLOWED_TRANSITIONS.put(InterventionStatus.AMBULANCE_AFFECTEE, EnumSet.of(InterventionStatus.AMBULANCE_EN_ROUTE));
+        // Auto-transition incluse pour permettre la reaffectation a une autre ambulance tant que le vehicule n'est pas encore en route.
+        ALLOWED_TRANSITIONS.put(InterventionStatus.AMBULANCE_AFFECTEE, EnumSet.of(InterventionStatus.AMBULANCE_AFFECTEE, InterventionStatus.AMBULANCE_EN_ROUTE));
         ALLOWED_TRANSITIONS.put(InterventionStatus.AMBULANCE_EN_ROUTE, EnumSet.of(InterventionStatus.ARRIVEE_SUR_LES_LIEUX));
         ALLOWED_TRANSITIONS.put(InterventionStatus.ARRIVEE_SUR_LES_LIEUX, EnumSet.of(InterventionStatus.PATIENT_PRIS_EN_CHARGE));
         ALLOWED_TRANSITIONS.put(InterventionStatus.PATIENT_PRIS_EN_CHARGE, EnumSet.of(InterventionStatus.TRANSPORT_VERS_CENTRE));
@@ -57,7 +72,7 @@ public class InterventionService {
     }
 
     @Transactional
-    public Intervention updateStatus(UUID interventionId, InterventionStatusUpdateRequest request) {
+    public InterventionResponseDTO updateStatus(UUID interventionId, InterventionStatusUpdateRequest request) {
         Intervention intervention = interventionRepository.findById(interventionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Intervention introuvable."));
 
@@ -96,9 +111,58 @@ public class InterventionService {
         intervention.updateStatus(request.getNewStatus());
         intervention = interventionRepository.save(intervention);
 
-        webSocketService.broadcastInterventionUpdate(intervention);
+        logCurrentUserAction("INTERVENTION_STATUS_" + request.getNewStatus(), intervention.getId());
 
-        return intervention;
+        InterventionResponseDTO response = interventionMapper.toResponse(intervention);
+        webSocketService.broadcastInterventionUpdate(response);
+
+        return response;
+    }
+
+    private void logCurrentUserAction(String action, UUID entityId) {
+        try {
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            User user = userRepository.findByEmail(email).orElse(null);
+            auditService.logAction(action, user, "INTERVENTION", entityId);
+        } catch (Exception ignored) {
+            // L'audit ne doit jamais casser le flux principal
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public InterventionResponseDTO getInterventionById(UUID id) {
+        Intervention intervention = interventionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Intervention introuvable."));
+        return interventionMapper.toResponse(intervention);
+    }
+
+    @Transactional(readOnly = true)
+    public InterventionResponseDTO getInterventionByAlertId(UUID alertId) {
+        Intervention intervention = interventionRepository.findByAlertId(alertId)
+                .orElseThrow(() -> new ResourceNotFoundException("Intervention introuvable pour cette alerte."));
+        return interventionMapper.toResponse(intervention);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<InterventionResponseDTO> listInterventions(Pageable pageable) {
+        return interventionRepository.findAll(pageable).map(interventionMapper::toResponse);
+    }
+
+    /**
+     * Retourne l'intervention active (non terminee, non archivee) sur laquelle
+     * l'ambulancier connecte est actuellement affecte, via son ambulance assignee
+     * (Ambulancier.currentAmbulance) - lien precis, pas une approximation par centre medical.
+     */
+    @Transactional(readOnly = true)
+    public Optional<InterventionResponseDTO> getActiveInterventionForUser(UUID userId) {
+        Ambulancier ambulancier = ambulancierRepository.findByUserId(userId).orElse(null);
+        if (ambulancier == null || ambulancier.getCurrentAmbulance() == null) {
+            return Optional.empty();
+        }
+
+        return interventionRepository
+                .findFirstByAmbulanceIdAndCompletedAtIsNullAndArchivedFalse(ambulancier.getCurrentAmbulance().getId())
+                .map(interventionMapper::toResponse);
     }
 
     private void validateTransition(InterventionStatus current, InterventionStatus target) {

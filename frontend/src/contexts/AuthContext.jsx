@@ -10,8 +10,10 @@ function decodeUserFromToken(token) {
     const payload = jwtDecode(token);
     return {
       userId: payload.userId || null,
-      email:  payload.sub,
-      roles:  (payload.roles || payload.authorities || []).map((r) =>
+      email: payload.sub,
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      roles: (payload.roles || payload.authorities || []).map((r) =>
         typeof r === "string" ? r.replace("ROLE_", "") : r
       ),
       permissions: payload.permissions || [],
