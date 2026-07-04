@@ -1,4 +1,4 @@
-/* Nhellan Emergency — Espace Citoyen (mobile-first) */
+/* Wonmally — Espace Citoyen (desktop-first) */
 
 :root {
   --cit-bg: #f4f6f9;
@@ -55,6 +55,12 @@
   justify-content: center;
   font-weight: 800;
   font-size: 0.75rem;
+}
+
+.cit-layout-brand-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
 }
 
 .cit-layout-brand-name {

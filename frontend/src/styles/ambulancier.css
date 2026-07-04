@@ -1025,6 +1025,12 @@
   font-size: 0.75rem;
 }
 
+.amb-layout-brand-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+}
+
 .amb-layout-brand-name {
   display: block;
   font-weight: 700;
