@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import logo from "../../assets/logo-wonmally.png";
 import "../../styles/ambulancier.css";
 
 const NAV_ITEMS = [
@@ -26,8 +27,9 @@ const NAV_ITEMS = [
 ];
 
 export default function AmbulancierLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout, hasRole } = useAuth();
   const location = useLocation();
+  const isAdmin = hasRole("ADMIN");
 
   const isFullscreenView = location.pathname.includes("/itineraire")
     || location.pathname.includes("/prise-en-charge");
@@ -36,15 +38,17 @@ export default function AmbulancierLayout() {
     ? `${(user.firstName || "?")[0]}${(user.lastName || "?")[0]}`.toUpperCase()
     : "??";
 
+  const roleLabel = isAdmin ? "Administration - Vue Ambulancier" : "Ambulancier";
+
   return (
     <div className="amb-layout">
       {!isFullscreenView && (
         <header className="amb-layout-header">
           <div className="amb-layout-brand">
-            <div className="amb-layout-brand-icon">NE</div>
+            <img src={logo} alt="Wonmally Logo" className="amb-layout-brand-logo" />
             <div>
-              <span className="amb-layout-brand-name">Nhellan Emergency</span>
-              <span className="amb-layout-brand-sub">Ambulancier</span>
+              <span className="amb-layout-brand-name">Wonmally</span>
+              <span className="amb-layout-brand-sub">{roleLabel}</span>
             </div>
           </div>
           <div className="amb-layout-user">

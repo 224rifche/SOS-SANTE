@@ -4,6 +4,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useWebSocket } from "../../contexts/WebSocketContext";
 import { alertService } from "../../services/alertService";
 import { formatClock } from "./regulationUtils";
+import logo from "../../assets/logo-wonmally.png";
 import {
   GridIcon, AlertIcon, MapIcon, AmbulanceIcon, DoctorIcon, HistoryIcon, StatsIcon, BellIcon,
 } from "./regulationIcons";
@@ -20,10 +21,11 @@ const NAV_ITEMS = [
 ];
 
 export default function RegulationLayout() {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const { connected, subscribe } = useWebSocket();
   const [pendingCount, setPendingCount] = useState(0);
   const [time, setTime] = useState(formatClock());
+  const isAdmin = hasRole("ADMIN");
 
   useEffect(() => {
     const timer = setInterval(() => setTime(formatClock()), 1000);
@@ -50,15 +52,17 @@ export default function RegulationLayout() {
     ? `${(user.firstName || "?")[0]}${(user.lastName || "?")[0]}`.toUpperCase()
     : "??";
   const fullName = user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : "Régulateur";
+  const roleLabel = isAdmin ? "Administration - Vue Régulation" : "Régulation";
+  const profileRole = isAdmin ? "Administrateur" : "Régulateur(rice)";
 
   return (
     <div className="reg-app-wrapper">
       <aside className="reg-sidebar">
         <div className="reg-brand">
-          <div className="reg-brand-icon">NE</div>
+          <img src={logo} alt="Wonmally Logo" className="reg-brand-logo" />
           <div>
-            <span className="reg-brand-name">Nhellan Emergency</span>
-            <span className="reg-brand-sub">Régulation</span>
+            <span className="reg-brand-name">Wonmally</span>
+            <span className="reg-brand-sub">{roleLabel}</span>
           </div>
         </div>
 
@@ -84,7 +88,7 @@ export default function RegulationLayout() {
           <div className="reg-profile-avatar">{initials}</div>
           <div>
             <span className="reg-profile-name">{fullName || "Régulateur"}</span>
-            <span className="reg-profile-role">Régulateur(rice)</span>
+            <span className="reg-profile-role">{profileRole}</span>
           </div>
         </div>
       </aside>
@@ -94,6 +98,7 @@ export default function RegulationLayout() {
           <div className="reg-header-title">
             <h1>
               Centre de régulation
+              {isAdmin && <span className="badge bg-primary ms-2">Vue Admin</span>}
               {pendingCount > 0 && (
                 <span className="reg-pending-pill">
                   <span className="reg-dot" />

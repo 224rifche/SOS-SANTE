@@ -1,0 +1,10 @@
+# ============================================================================
+# WON-MALLY FRONTEND - Dockerfile de DEVELOPPEMENT (hot-reload Vite)
+# Ne pas utiliser en production - voir Dockerfile pour le build de prod
+# ============================================================================
+FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+EXPOSE 5173
+ENTRYPOINT ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
