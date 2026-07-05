@@ -5,6 +5,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "react-toastify";
 import "../../styles/global.css";
+import logo from "../../assets/logo-wonmally.png";
 
 const loginSchema = z.object({
   email: z.string().email("Adresse email invalide"),
@@ -32,9 +33,9 @@ export default function LoginPage() {
     <div className="auth-ne-wrapper">
       <div className="auth-ne-brand">
         <Link to="/" className="auth-ne-logo text-decoration-none text-white">
-          <span className="auth-ne-logo-icon">NE</span>
+          <img src={logo} alt="Wonmally" className="auth-ne-logo-icon" />
           <span>
-            <strong>Nhellan Emergency</strong>
+            <strong>Wonmally</strong>
             <small>Chaque seconde compte</small>
           </span>
         </Link>
@@ -61,8 +62,8 @@ export default function LoginPage() {
       <div className="auth-ne-form-panel">
         <div className="auth-ne-form-card">
           <div className="text-center mb-4 d-lg-none">
-            <span className="auth-ne-logo-icon d-inline-flex mb-2">NE</span>
-            <h2 className="h5 fw-bold mb-0">Nhellan Emergency</h2>
+            <img src={logo} alt="Wonmally" className="auth-ne-logo-icon d-inline-flex mb-2" />
+            <h2 className="h5 fw-bold mb-0">Wonmally</h2>
           </div>
 
           <h2 className="auth-ne-form-title">Connexion</h2>
