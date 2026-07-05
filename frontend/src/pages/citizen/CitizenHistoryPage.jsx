@@ -11,16 +11,39 @@ const STATUS_LABELS = {
 const ACTIVE = new Set(["EN_ATTENTE_VALIDATION", "VALIDEE", "AMBULANCE_AFFECTEE", "AMBULANCE_EN_ROUTE", "ARRIVEE_SUR_LES_LIEUX"]);
 
 export default function CitizenHistoryPage() {
+  const { hasRole } = useAuth();
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const isAdmin = hasRole("ADMIN");
 
   useEffect(() => {
+    if (isAdmin) {
+      setLoading(false);
+      return;
+    }
+
     alertService.getMyAlerts()
       .then(setAlerts)
       .finally(() => setLoading(false));
-  }, []);
+  }, [isAdmin]);
 
   if (loading) return <div className="text-center py-5">Chargement...</div>;
+
+  if (isAdmin) {
+    return (
+      <>
+        <h1 className="cit-page-title">Historique</h1>
+        <div className="alert alert-info mx-3">
+          <h5 className="alert-heading">Vue Administrateur</h5>
+          <p className="mb-0">L'historique des alertes n'est pas disponible en mode administrateur.</p>
+          <p className="mb-0 small text-muted">Utilisez le Centre Médical pour voir toutes les alertes du système.</p>
+          <Link to="/medical-center/history" className="btn btn-sm btn-primary mt-2">
+            Aller au Centre Médical
+          </Link>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

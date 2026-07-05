@@ -10,23 +10,71 @@ const ACTIVE = new Set([
 ]);
 
 export default function CitizenDashboard() {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const [profile, setProfile] = useState(null);
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const isAdmin = hasRole("ADMIN");
 
   useEffect(() => {
+    if (isAdmin) {
+      setLoading(false);
+      return;
+    }
+
     Promise.all([citizenService.getMyProfile(), alertService.getMyAlerts()])
       .then(([p, a]) => { setProfile(p); setAlerts(a); })
       .catch((err) => setError(err.response?.data?.message || "Erreur de chargement."))
       .finally(() => setLoading(false));
-  }, []);
+  }, [isAdmin]);
 
   const activeAlert = alerts.find((a) => ACTIVE.has(a.status));
 
   if (loading) {
     return <div className="text-center py-5 text-secondary">Chargement...</div>;
+  }
+
+  if (isAdmin) {
+    return (
+      <div className="text-center py-5">
+        <div className="alert alert-info mx-3">
+          <h5 className="alert-heading">Vue Administrateur</h5>
+          <p className="mb-0">Vous visualisez l'interface citoyen en mode lecture seule.</p>
+          <p className="mb-0 small text-muted">Les fonctionnalités interactives sont désactivées pour les administrateurs.</p>
+        </div>
+        <div className="cit-sos-hero">
+          <div className="cit-sos-btn-large" style={{ opacity: 0.6, cursor: "not-allowed" }}>
+            <span>SOS</span>
+            <span>URGENCE</span>
+          </div>
+          <p className="cit-card-sub">Bouton désactivé en mode administrateur</p>
+        </div>
+        <p className="cit-section-label">Accès rapide</p>
+        <div className="cit-grid-2">
+          <div className="cit-card" style={{ opacity: 0.7 }}>
+            <div className="cit-stat-icon blue">📍</div>
+            <p className="cit-card-title">Ma position</p>
+            <p className="cit-card-sub">Non disponible (admin)</p>
+          </div>
+          <div className="cit-card" style={{ opacity: 0.7 }}>
+            <div className="cit-stat-icon red">📞</div>
+            <p className="cit-card-title">Contact urgence</p>
+            <p className="cit-card-sub">Non disponible (admin)</p>
+          </div>
+          <Link to="/citizen/history" className="cit-card cit-card-link">
+            <div className="cit-stat-icon gray">📋</div>
+            <p className="cit-card-title">Historique</p>
+            <p className="cit-card-sub">Voir l'historique</p>
+          </Link>
+          <div className="cit-card" style={{ opacity: 0.7 }}>
+            <div className="cit-stat-icon green">🩸</div>
+            <p className="cit-card-title">Mon profil</p>
+            <p className="cit-card-sub">Non disponible (admin)</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

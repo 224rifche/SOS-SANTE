@@ -99,7 +99,7 @@ button:disabled {
 /* ============================================================
    Auth split-screen - panneau signature (ligne de pouls)
    ============================================================ */
-/* ========== Auth Nhellan Emergency ========== */
+/* ========== Auth Wonmally ========== */
 
 .auth-ne-wrapper {
   min-height: 100vh;
@@ -548,4 +548,66 @@ button:disabled {
 
 .auth-ne-footer a:hover {
   border-bottom-color: #e53935;
+}
+
+
+/* ============================================================
+   Fond ambulance + mise en page centree (une seule colonne)
+   ============================================================ */
+.auth-ne-wrapper {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.auth-ne-form-panel {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  background: transparent;
+}
+
+.auth-ne-form-card {
+  max-height: 92vh;
+  max-width: 440px;
+  overflow-y: auto;
+}
+
+/* ============================================================
+   Scrollbar fine et stylee sur la carte de formulaire
+   ============================================================ */
+.auth-ne-form-card {
+  scrollbar-width: thin;
+  scrollbar-color: #e53935 transparent;
+}
+
+.auth-ne-form-card::-webkit-scrollbar {
+  width: 6px;
+}
+
+.auth-ne-form-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.auth-ne-form-card::-webkit-scrollbar-thumb {
+  background-color: rgba(229, 57, 53, 0.4);
+  border-radius: 10px;
+}
+
+.auth-ne-form-card::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(229, 57, 53, 0.7);
+}
+
+/* ============================================================
+   Centrage du titre et sous-titre du formulaire
+   ============================================================ */
+.auth-ne-form-title,
+.auth-ne-form-sub {
+  text-align: center;
 }

@@ -1,4 +1,4 @@
-/* Nhellan Emergency — Espace Médecin */
+/* Wonmally — Espace Médecin (desktop-first) */
 
 :root {
   --doc-bg: #f0f4f8;
@@ -8,6 +8,7 @@
   --doc-text: #0f172a;
   --doc-muted: #64748b;
   --doc-teal: #007a78;
+  --doc-max-width: 1200px;
 }
 
 .doc-layout {
@@ -43,10 +44,22 @@
   font-size: 0.75rem;
 }
 
+.doc-layout-brand-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+}
+
 .doc-layout-main {
-  max-width: 960px;
+  max-width: var(--doc-max-width);
   margin: 0 auto;
   padding: 20px 16px 40px;
+}
+
+@media (max-width: 768px) {
+  .doc-layout-main {
+    max-width: 100%;
+  }
 }
 
 .doc-stats-row {

@@ -55,7 +55,7 @@ export default function Navbar() {
             NE
           </div>
           <span>
-            Nhellan <span className="text-danger">Emergency</span>
+            Wonmally <span className="text-danger">Emergency</span>
           </span>
         </Link>
         <div className="collapse navbar-collapse show" id="navbarNav">

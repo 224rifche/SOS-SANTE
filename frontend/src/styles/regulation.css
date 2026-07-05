@@ -1,4 +1,4 @@
-/* Theme sombre du Centre de regulation (Nhellan Emergency) */
+/* Theme sombre du Centre de regulation (Wonmally - desktop-first) */
 
 :root {
   --reg-bg: #0b1220;
@@ -17,6 +17,7 @@
   --reg-blue-badge-bg: rgba(59, 130, 246, 0.15);
   --reg-green: #22c55e;
   --reg-green-bg: rgba(34, 197, 94, 0.15);
+  --reg-max-width: 1600px;
 }
 
 .reg-app-wrapper {
@@ -25,6 +26,14 @@
   background-color: var(--reg-bg);
   color: var(--reg-text);
   font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  max-width: var(--reg-max-width);
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .reg-app-wrapper {
+    max-width: 100%;
+  }
 }
 
 /* ---------- Sidebar ---------- */
@@ -60,6 +69,12 @@
   font-weight: 700;
   font-size: 0.95rem;
   color: white;
+}
+
+.reg-brand-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
 }
 
 .reg-brand-name {

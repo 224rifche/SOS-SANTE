@@ -3,6 +3,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import logo from "../../assets/logo-wonmally.png";
+import ambulance from "../../assets/ambulance.png";
 import { toast } from "react-toastify";
 import "../../styles/global.css";
 
@@ -32,42 +34,12 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="auth-ne-wrapper">
-      <div className="auth-ne-brand">
-        <Link to="/" className="auth-ne-logo text-decoration-none text-white">
-          <span className="auth-ne-logo-icon">NE</span>
-          <span>
-            <strong>Nhellan Emergency</strong>
-            <small>Chaque seconde compte</small>
-          </span>
-        </Link>
-
-        <div className="auth-ne-brand-content">
-          <span className="auth-ne-badge">Plateforme médicale certifiée</span>
-          <h1>Rejoignez la communauté</h1>
-          <p>
-            Créez votre compte pour accéder aux services d'urgence,
-            suivre vos demandes en temps réel et sauver des vies.
-          </p>
-          <ul className="auth-ne-features">
-            <li>Accès instantané aux services d'urgence</li>
-            <li>Suivi en temps réel de vos demandes</li>
-            <li>Communication sécurisée avec les professionnels</li>
-          </ul>
-        </div>
-
-        <svg className="auth-ne-pulse" viewBox="0 0 460 80" aria-hidden="true">
-          <path d="M0 40 L80 40 L100 10 L125 70 L145 40 L200 40 L215 25 L230 55 L260 40 L460 40" fill="none" stroke="rgba(229,57,53,0.6)" strokeWidth="2" />
-        </svg>
-      </div>
-
+    <div className="auth-ne-wrapper" style={{ backgroundImage: `linear-gradient(rgba(11,21,36,0.85), rgba(11,21,36,0.85)), url(${ambulance})` }}>
       <div className="auth-ne-form-panel">
         <div className="auth-ne-form-card">
-          <div className="text-center mb-4 d-lg-none">
-            <span className="auth-ne-logo-icon d-inline-flex mb-2">NE</span>
-            <h2 className="h5 fw-bold mb-0">Nhellan Emergency</h2>
-          </div>
-
+           <div className="text-center mb-4">
+            <img src={logo} alt="Wonmally" className="auth-ne-logo-icon d-inline-flex mb-2" />
+          </div>  
           <h2 className="auth-ne-form-title">Création de compte</h2>
           <p className="auth-ne-form-sub">Rejoignez la plateforme d'urgence</p>
 

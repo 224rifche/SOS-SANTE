@@ -2,21 +2,29 @@ import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useWebSocket } from "../../contexts/WebSocketContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { doctorService } from "../../services/doctorService";
 import { statusLabel } from "../medical-center/regulationUtils";
 
 export default function DoctorDashboard() {
   const { connected, subscribe } = useWebSocket();
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole("ADMIN");
   const [profile, setProfile] = useState(null);
   const [interventions, setInterventions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isAdmin) {
+      setLoading(false);
+      return;
+    }
+
     doctorService.getMyProfile()
       .then(setProfile)
       .catch(() => toast.error("Impossible de charger votre profil médecin."))
       .finally(() => setLoading(false));
-  }, []);
+  }, [isAdmin]);
 
   const upsertIntervention = useCallback((item) => {
     if (!profile?.id || item.doctorId !== profile.id) return;
@@ -47,6 +55,21 @@ export default function DoctorDashboard() {
 
   if (loading) {
     return <div className="text-center py-5 text-secondary">Chargement...</div>;
+  }
+
+  if (isAdmin) {
+    return (
+      <>
+        <div className="alert alert-info mx-3 mt-3">
+          <h5 className="alert-heading">Vue Administrateur</h5>
+          <p className="mb-0">Le dashboard médecin n'est pas disponible en mode administrateur.</p>
+          <p className="mb-0 small text-muted">Utilisez le Centre Médical pour gérer les interventions et les médecins.</p>
+          <Link to="/medical-center/doctors" className="btn btn-sm btn-primary mt-2">
+            Aller au Centre Médical
+          </Link>
+        </div>
+      </>
+    );
   }
 
   return (

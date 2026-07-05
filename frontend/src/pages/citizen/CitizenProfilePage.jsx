@@ -16,12 +16,19 @@ const profileSchema = z.object({
 const BLOOD_GROUPS = ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"];
 
 export default function CitizenProfilePage() {
+  const { hasRole } = useAuth();
   const [loading, setLoading] = useState(true);
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(profileSchema),
   });
+  const isAdmin = hasRole("ADMIN");
 
   useEffect(() => {
+    if (isAdmin) {
+      setLoading(false);
+      return;
+    }
+
     citizenService.getMyProfile()
       .then((data) => reset({
         address: data.address || "",
@@ -31,7 +38,7 @@ export default function CitizenProfilePage() {
       }))
       .catch(() => toast.error("Impossible de charger votre profil."))
       .finally(() => setLoading(false));
-  }, [reset]);
+  }, [reset, isAdmin]);
 
   const onSubmit = async (formData) => {
     try {
@@ -48,6 +55,22 @@ export default function CitizenProfilePage() {
   };
 
   if (loading) return <div className="text-center py-5">Chargement...</div>;
+
+  if (isAdmin) {
+    return (
+      <>
+        <h1 className="cit-page-title">Mon profil médical</h1>
+        <div className="alert alert-info mx-3">
+          <h5 className="alert-heading">Vue Administrateur</h5>
+          <p className="mb-0">Le profil citoyen n'est pas disponible en mode administrateur.</p>
+          <p className="mb-0 small text-muted">Utilisez la gestion des utilisateurs dans le tableau de bord admin.</p>
+          <Link to="/admin" className="btn btn-sm btn-primary mt-2">
+            Aller au tableau de bord Admin
+          </Link>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

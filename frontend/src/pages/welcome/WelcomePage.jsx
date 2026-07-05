@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { dashboardService } from "../../services/dashboardService";
+import Icon from "../../components/ui/Icon";
+import logo from "../../assets/logo-wonmally.png";
 
 const PROBLEMS = [
   {
@@ -40,7 +42,7 @@ const FAQS = [
   { q: "Comment declencher une alerte SOS ?", a: "Connectez-vous, appuyez sur le bouton SOS, selectionnez le type d'urgence : votre position et votre demande sont transmises immediatement au centre medical le plus proche." },
   { q: "Le suivi de l'ambulance est-il vraiment en temps reel ?", a: "Oui. La position de l'ambulance et le statut de l'intervention sont mis a jour via WebSocket, sans avoir a rafraichir la page." },
   { q: "Mes donnees medicales sont-elles protegees ?", a: "Vos donnees sont chiffrees et uniquement accessibles aux professionnels impliques dans votre prise en charge, conformement aux principes RGPD." },
-  { q: "Qui utilise Nhellan Emergency ?", a: "Citoyens, centres medicaux, ambulanciers, medecins et administrateurs partagent une meme plateforme, chacun avec un acces adapte a son role." },
+  { q: "Qui utilise Wonmally ?", a: "Citoyens, centres medicaux, ambulanciers, medecins et administrateurs partagent une meme plateforme, chacun avec un acces adapte a son role." },
   { q: "L'application fonctionne-t-elle hors ligne ?", a: "La geolocalisation et l'envoi d'alerte necessitent une connexion internet active pour garantir la fiabilite de la transmission au centre de regulation." },
 ];
 
@@ -81,12 +83,8 @@ export default function WelcomePage() {
       {/* ============ HEADER ============ */}
       <header className="d-flex align-items-center justify-content-between px-4 py-3 text-white" style={{ background: "#0B1524" }}>
         <div className="d-flex align-items-center gap-2">
-          <div className="d-inline-flex align-items-center justify-content-center bg-danger rounded-3" style={{ width: "34px", height: "34px" }}>
-            <span className="fw-bold">✽</span>
-          </div>
-          <div>
-            <p className="fw-bold mb-0 lh-1">Nhellan</p>
-            <p className="small mb-0 lh-1 text-white-50" style={{ fontSize: "0.65rem", letterSpacing: "0.1em" }}>EMERGENCY</p>
+          <div className="d-inline-flex align-items-center justify-content-center rounded-3" style={{ width: "34px", height: "34px" }}>
+           <img src={logo} alt="logo du projet" style={{ width: "50px", height: "50px" }} /> 
           </div>
         </div>
 
@@ -98,9 +96,9 @@ export default function WelcomePage() {
         </nav>
 
         <div className="d-flex align-items-center gap-2">
-          <Link to="/login" className="btn btn-link text-white text-decoration-none small d-none d-md-inline-block">Se connecter</Link>
+          <Link to="/login" className="btn btn-link text-white text-decoration-none small">Se connecter</Link>
           <Link to="/login" className="btn btn-danger btn-sm fw-semibold rounded-3 px-3">
-            SOS Declencher un SOS
+            Declencher un SOS
           </Link>
         </div>
       </header>
@@ -117,7 +115,7 @@ export default function WelcomePage() {
               <span className="text-danger">Chaque vie</span> merite une reponse.
             </h1>
             <p className="text-white-50 fs-5 mb-4">
-              Nhellan Emergency relie citoyens, centres de regulation, ambulanciers et medecins
+              Wonmally relie citoyens, centres de regulation, ambulanciers et medecins
               sur une seule plateforme intelligente — pour declencher, valider et coordonner
               une intervention en quelques secondes.
             </p>
@@ -170,13 +168,6 @@ export default function WelcomePage() {
           </div>
         </div>
 
-        <div className="d-flex flex-wrap justify-content-center gap-4 mt-5 pt-4 border-top border-white border-opacity-10 text-white-50 small">
-          <span>CONCU SELON</span>
-          <span>🛡 WCAG 2.2 AA</span>
-          <span>🔒 RGPD · Donnees chiffrees</span>
-          <span>⚡ WebSocket temps reel</span>
-          <span>📷 Protocoles SAMU</span>
-        </div>
       </section>
 
       {/* ============ PROBLEME ============ */}
@@ -195,7 +186,7 @@ export default function WelcomePage() {
             {PROBLEMS.map((p) => (
               <div className="col-12 col-md-4" key={p.title}>
                 <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
-                  <div className="fs-3 mb-3">{p.icon}</div>
+                  <div className="mb-3"><Icon name={p.icon} size={28} color="#E53935" /></div>
                   <p className="fw-bold mb-2">{p.title}</p>
                   <p className="text-secondary small mb-0">{p.text}</p>
                 </div>
@@ -211,7 +202,7 @@ export default function WelcomePage() {
                 Une seule plateforme, de<br />l'alerte a la prise en charge.
               </h2>
               <p className="text-secondary mb-4">
-                Nhellan Emergency orchestre toute la chaine des secours en temps reel. Le citoyen
+                Wonmally orchestre toute la chaine des secours en temps reel. Le citoyen
                 declenche, le centre valide, l'ambulance est affectee, le medecin prepare —
                 chacun voit la meme information, a la seconde pres.
               </p>
@@ -274,7 +265,7 @@ export default function WelcomePage() {
           {FEATURES.map((f) => (
             <div className="col-12 col-md-6 col-lg-4" key={f.title}>
               <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
-                <div className="fs-3 mb-3">{f.icon}</div>
+                <div className="mb-3"><Icon name={f.icon} size={28} color="#1565C0" /></div>
                 <p className="fw-bold mb-2">{f.title}</p>
                 <p className="text-secondary small mb-0">{f.text}</p>
               </div>
@@ -332,7 +323,7 @@ export default function WelcomePage() {
 
       {/* ============ FOOTER ============ */}
       <footer className="px-4 py-4 text-center text-white-50 small" style={{ background: "#060C16" }}>
-        © {new Date().getFullYear()} Nhellan Emergency — Chaque seconde compte.
+        © {new Date().getFullYear()} Wonmally — Chaque seconde compte.
       </footer>
 
     </div>
