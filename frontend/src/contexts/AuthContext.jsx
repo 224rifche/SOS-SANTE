@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useMemo } from "react";
+import { createContext, useContext, useState, useCallback, useMemo, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
 import { authService } from "../services/authService";
 
@@ -26,6 +26,7 @@ function decodeUserFromToken(token) {
 export function AuthProvider({ children }) {
   const [accessToken, setAccessToken] = useState(() => localStorage.getItem("wonmally_access_token"));
   const [user, setUser] = useState(() => decodeUserFromToken(localStorage.getItem("wonmally_access_token")));
+  const [authChecked, setAuthChecked] = useState(false);
 
   const persistSession = useCallback((authResponse) => {
     localStorage.setItem("wonmally_access_token", authResponse.accessToken);
@@ -58,6 +59,29 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    authService.getMe()
+      .then((profile) => {
+        if (cancelled) return;
+        setUser({
+          userId: profile.id,
+          email: profile.email,
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          roles: Array.from(profile.roles || []),
+          permissions: Array.from(profile.permissions || []),
+        });
+      })
+      .catch(() => {
+        // Pas de session cookie valide ; on garde le fallback localStorage existant.
+      })
+      .finally(() => {
+        if (!cancelled) setAuthChecked(true);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
   const hasRole = useCallback(
     (role) => user?.roles?.includes(role) ?? false,
     [user]
@@ -71,13 +95,14 @@ export function AuthProvider({ children }) {
   const value = useMemo(() => ({
     user,
     accessToken,
+    authChecked,
     isAuthenticated: !!accessToken,
     login,
     register,
     logout,
     hasRole,
     hasPermission,
-  }), [user, accessToken, login, register, logout, hasRole, hasPermission]);
+  }), [user, accessToken, authChecked, login, register, logout, hasRole, hasPermission]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

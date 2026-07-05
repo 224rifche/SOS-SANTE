@@ -14,4 +14,8 @@ export const authService = {
   async logout(refreshToken) {
     await apiClient.post("/auth/logout", { refreshToken });
   },
+  async getMe() {
+    const { data } = await apiClient.get("/auth/me");
+    return data;
+  },
 };

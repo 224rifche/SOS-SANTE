@@ -86,7 +86,7 @@ class AuthServiceTest {
                 .phone("+224600000000")
                 .build();
 
-        loginRequest = new LoginRequest("jean.dupont@example.com", "password123");
+        loginRequest = new LoginRequest("jean.dupont@example.com", "password123", false);
     }
 
     @Test

@@ -18,6 +18,11 @@ public class UserMapper {
             .map(Role::getName)
             .collect(Collectors.toSet());
 
+        Set<String> permissionCodes = user.getRoles().stream()
+            .flatMap(role -> role.getPermissions().stream())
+            .map(com.wonmally.app.user.entity.Permission::getCode)
+            .collect(Collectors.toSet());
+
         return UserProfileResponseDTO.builder()
             .id(user.getId())
             .email(user.getEmail())
@@ -26,6 +31,7 @@ public class UserMapper {
             .phone(user.getPhone())
             .profilePicture(user.getProfilePicture())
             .roles(roleNames)
+            .permissions(permissionCodes)
             .enabled(Boolean.TRUE.equals(user.getEnabled()))
             .verified(Boolean.TRUE.equals(user.getVerified()))
             .lastLogin(user.getLastLogin())

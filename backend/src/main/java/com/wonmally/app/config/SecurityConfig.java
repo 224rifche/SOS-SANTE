@@ -60,6 +60,7 @@ public class SecurityConfig {
                 .authenticationEntryPoint(authEntryPoint)
                 .accessDeniedHandler(accessDeniedHandler))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/v1/auth/me").authenticated()
                 .requestMatchers(
                     "/api/v1/auth/**",
                     "/api/v1/dashboard/public-stats",

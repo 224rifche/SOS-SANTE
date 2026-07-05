@@ -88,10 +88,9 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
-
     @Test
     void login_ShouldReturnOk_WhenPayloadIsValid() throws Exception {
-        LoginRequest request = new LoginRequest("jean.dupont@example.com", "password123");
+        LoginRequest request = new LoginRequest("jean.dupont@example.com", "password123", false);
 
         AuthResponse response = AuthResponse.builder()
                 .accessToken("access_token")

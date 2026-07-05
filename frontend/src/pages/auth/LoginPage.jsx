@@ -11,6 +11,7 @@ import ambulance from "../../assets/ambulance.png";
 const loginSchema = z.object({
   email: z.string().email("Adresse email invalide"),
   password: z.string().min(1, "Mot de passe requis"),
+  rememberMe: z.boolean().optional(),
 });
 
 export default function LoginPage() {
@@ -60,6 +61,16 @@ export default function LoginPage() {
             />
             {errors.password && <p className="auth-ne-error">{errors.password.message}</p>}
 
+            <div className="d-flex align-items-center gap-2 mb-3">
+              <input
+                id="rememberMe"
+                type="checkbox"
+                {...register("rememberMe")}
+              />
+              <label htmlFor="rememberMe" className="auth-ne-label mb-0" style={{ cursor: "pointer" }}>
+                Se souvenir de moi
+              </label>
+            </div>
             <button type="submit" className="auth-ne-submit" disabled={isSubmitting}>
               {isSubmitting ? "Connexion..." : "Se connecter"}
             </button>
