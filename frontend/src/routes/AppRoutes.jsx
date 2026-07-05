@@ -5,6 +5,8 @@ import DoctorLayout from "../pages/doctor/DoctorLayout";
 import ProtectedRoute from "./ProtectedRoute";
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
+import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
 import SOSPage from "../pages/citizen/SOSPage";
 import CitizenDashboard from "../pages/citizen/CitizenDashboard";
 import CitizenLayout from "../pages/citizen/CitizenLayout";
@@ -49,6 +51,8 @@ export default function AppRoutes() {
       <Route path="/" element={<HomeRedirect />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<ProtectedRoute allowedRoles={["CITIZEN", "ADMIN"]} />}>

@@ -128,4 +128,20 @@ public class AuthController {
                 .orElseThrow(() -> new BadRequestException("Utilisateur introuvable."));
         return ResponseEntity.ok(userMapper.toProfileResponse(user));
     }
+
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Demander un lien de reinitialisation de mot de passe par email")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request,
+                                                HttpServletRequest httpRequest) {
+        authService.forgotPassword(request, IpUtils.extractClientIp(httpRequest));
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Reinitialiser le mot de passe avec le token recu par email")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request,
+                                               HttpServletRequest httpRequest) {
+        authService.resetPassword(request, IpUtils.extractClientIp(httpRequest));
+        return ResponseEntity.noContent().build();
+    }
 }

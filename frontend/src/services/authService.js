@@ -18,4 +18,10 @@ export const authService = {
     const { data } = await apiClient.get("/auth/me");
     return data;
   },
+  async forgotPassword(email) {
+    await apiClient.post("/auth/forgot-password", { email });
+  },
+  async resetPassword(token, newPassword) {
+    await apiClient.post("/auth/reset-password", { token, newPassword });
+  },
 };

@@ -31,6 +31,12 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    const isAuthMeRequest = originalRequest.url?.includes("/auth/me");
+
+    if (isAuthMeRequest) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 

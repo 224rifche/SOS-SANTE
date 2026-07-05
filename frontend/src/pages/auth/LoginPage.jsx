@@ -71,6 +71,11 @@ export default function LoginPage() {
                 Se souvenir de moi
               </label>
             </div>
+            <p className="text-end mb-3">
+              <Link to="/forgot-password" className="auth-ne-footer" style={{ margin: 0, fontSize: "0.85rem" }}>
+                Mot de passe oublie ?
+              </Link>
+            </p>
             <button type="submit" className="auth-ne-submit" disabled={isSubmitting}>
               {isSubmitting ? "Connexion..." : "Se connecter"}
             </button>

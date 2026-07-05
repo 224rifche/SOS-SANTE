@@ -8,9 +8,11 @@ import com.wonmally.app.exception.AccountLockedException;
 import com.wonmally.app.exception.BadRequestException;
 import com.wonmally.app.security.CustomUserPrincipal;
 import com.wonmally.app.security.JwtService;
+import com.wonmally.app.user.entity.PasswordResetToken;
 import com.wonmally.app.user.entity.RefreshToken;
 import com.wonmally.app.user.entity.Role;
 import com.wonmally.app.user.entity.User;
+import com.wonmally.app.user.repository.PasswordResetTokenRepository;
 import com.wonmally.app.user.repository.RefreshTokenRepository;
 import com.wonmally.app.user.repository.RoleRepository;
 import com.wonmally.app.user.repository.UserRepository;
@@ -48,6 +50,8 @@ public class AuthService {
     private final AuthenticationManager  authenticationManager;
     private final AuditService           auditService;
     private final CitizenRepository      citizenRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailService           emailService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request, String ipAddress) {
@@ -215,5 +219,58 @@ public class AuthService {
         byte[] tokenBytes = new byte[64];
         secureRandom.nextBytes(tokenBytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
+    }
+
+    private static final int PASSWORD_RESET_TOKEN_VALIDITY_HOURS = 1;
+
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequest request, String ipAddress) {
+        userRepository.findByEmail(request.getEmail()).ifPresent(user -> {
+            passwordResetTokenRepository.deleteByUserId(user.getId());
+
+            String rawToken = generateSecureRandomToken();
+            String tokenHash = HashUtils.sha256Hex(rawToken);
+
+            PasswordResetToken resetToken = PasswordResetToken.builder()
+                    .user(user)
+                    .tokenHash(tokenHash)
+                    .expirationDate(LocalDateTime.now().plusHours(PASSWORD_RESET_TOKEN_VALIDITY_HOURS))
+                    .used(false)
+                    .build();
+            passwordResetTokenRepository.save(resetToken);
+
+            String resetLink = "http://localhost:5173/reset-password?token=" + rawToken;
+            emailService.sendPasswordResetEmail(user.getEmail(), resetLink);
+
+            auditService.logAuthEvent("PASSWORD_RESET_REQUESTED", user, ipAddress);
+        });
+        // Reponse identique que l'email existe ou non, pour ne pas reveler les comptes existants.
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request, String ipAddress) {
+        String tokenHash = HashUtils.sha256Hex(request.getToken());
+
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByTokenHash(tokenHash)
+                .orElseThrow(() -> new BadRequestException("Lien de reinitialisation invalide ou expire."));
+
+        if (Boolean.TRUE.equals(resetToken.getUsed())) {
+            throw new BadRequestException("Ce lien de reinitialisation a deja ete utilise.");
+        }
+
+        if (resetToken.getExpirationDate().isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("Ce lien de reinitialisation a expire. Veuillez en redemander un.");
+        }
+
+        User user = resetToken.getUser();
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        resetToken.setUsed(true);
+        passwordResetTokenRepository.save(resetToken);
+
+        refreshTokenRepository.deleteByUserId(user.getId());
+
+        auditService.logAuthEvent("PASSWORD_RESET_COMPLETED", user, ipAddress);
     }
 }
