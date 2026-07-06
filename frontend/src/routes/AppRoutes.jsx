@@ -7,6 +7,7 @@ import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
+import VerifyEmailPage from "../pages/auth/VerifyEmailPage";
 import SOSPage from "../pages/citizen/SOSPage";
 import CitizenDashboard from "../pages/citizen/CitizenDashboard";
 import CitizenLayout from "../pages/citizen/CitizenLayout";
@@ -53,6 +54,7 @@ export default function AppRoutes() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<ProtectedRoute allowedRoles={["CITIZEN", "ADMIN"]} />}>

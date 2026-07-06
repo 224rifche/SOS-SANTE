@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -53,24 +54,13 @@ class AuthControllerTest {
                 .password("password123")
                 .build();
 
-        AuthResponse response = AuthResponse.builder()
-                .accessToken("access_token")
-                .refreshToken("refresh_token")
-                .tokenType("Bearer")
-                .build();
-
-        // Correction : ajout de any(String.class) pour matcher la signature attendue
-        when(authService.register(any(RegisterRequest.class), any(String.class))).thenReturn(response);
+        doNothing().when(authService).register(any(RegisterRequest.class), any(String.class));
 
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.accessToken").value("access_token"))
-                .andExpect(jsonPath("$.refreshToken").value("refresh_token"))
-                .andExpect(jsonPath("$.tokenType").value("Bearer"));
+                .andExpect(status().isCreated());
 
-        // Correction : ajout du matcher manquant pour la vérification
         verify(authService).register(any(RegisterRequest.class), any(String.class));
     }
 

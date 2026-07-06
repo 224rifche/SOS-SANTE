@@ -42,10 +42,8 @@ export function AuthProvider({ children }) {
   }, [persistSession]);
 
   const register = useCallback(async (payload) => {
-    const response = await authService.register(payload);
-    persistSession(response);
-    return response;
-  }, [persistSession]);
+    await authService.register(payload);
+  }, []);
 
   const logout = useCallback(async () => {
     const refreshToken = localStorage.getItem("wonmally_refresh_token");
@@ -74,7 +72,13 @@ export function AuthProvider({ children }) {
         });
       })
       .catch(() => {
-        // Pas de session cookie valide ; on garde le fallback localStorage existant.
+        // Le cookie de session est invalide ou absent : on nettoie l'etat local perime.
+        if (!cancelled) {
+          localStorage.removeItem("wonmally_access_token");
+          localStorage.removeItem("wonmally_refresh_token");
+          setAccessToken(null);
+          setUser(null);
+        }
       })
       .finally(() => {
         if (!cancelled) setAuthChecked(true);

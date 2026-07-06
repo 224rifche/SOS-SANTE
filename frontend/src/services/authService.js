@@ -2,8 +2,7 @@ import apiClient from "./apiClient";
 
 export const authService = {
   async register(payload) {
-    const { data } = await apiClient.post("/auth/register", payload);
-    return data;
+    await apiClient.post("/auth/register", payload);
   },
 
   async login(payload) {
@@ -23,5 +22,8 @@ export const authService = {
   },
   async resetPassword(token, newPassword) {
     await apiClient.post("/auth/reset-password", { token, newPassword });
+  },
+  async verifyEmail(token) {
+    await apiClient.get("/auth/verify-email", { params: { token } });
   },
 };

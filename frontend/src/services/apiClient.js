@@ -6,6 +6,7 @@ export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
+  withXSRFToken: true,
 });
 
 // Intercepteur de requete : injection automatique du Bearer Token JWT.
@@ -13,6 +14,14 @@ apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("wonmally_access_token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  const xsrfToken = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("XSRF-TOKEN="))
+    ?.split("=")[1];
+  if (xsrfToken) {
+    config.headers["X-XSRF-TOKEN"] = xsrfToken;
   }
   return config;
 });

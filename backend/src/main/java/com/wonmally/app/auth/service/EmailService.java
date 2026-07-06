@@ -41,4 +41,26 @@ public class EmailService {
             log.info("[DEV] Lien de reinitialisation pour {} : {}", toEmail, resetLink);
         }
     }
+
+    public void sendVerificationEmail(String toEmail, String verificationLink) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom("onboarding@resend.dev");
+            message.setTo(toEmail);
+            message.setSubject("Wonmally - Verifiez votre adresse email");
+            message.setText(
+                "Bonjour,\n\n" +
+                "Merci de vous etre inscrit sur Wonmally.\n" +
+                "Cliquez sur le lien suivant pour verifier votre adresse email (valable 24 heures) :\n\n" +
+                verificationLink + "\n\n" +
+                "Si vous n'etes pas a l'origine de cette inscription, ignorez cet email.\n\n" +
+                "L'equipe Wonmally"
+            );
+            mailSender.send(message);
+            log.info("Email de verification envoye a {}", toEmail);
+        } catch (Exception ex) {
+            log.warn("Echec de l'envoi d'email de verification a {}: {}", toEmail, ex.getMessage());
+            log.info("[DEV] Lien de verification pour {} : {}", toEmail, verificationLink);
+        }
+    }
 }

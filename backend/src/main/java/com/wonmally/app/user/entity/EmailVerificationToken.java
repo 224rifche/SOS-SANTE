@@ -1,0 +1,31 @@
+package com.wonmally.app.user.entity;
+
+import com.wonmally.app.common.BaseEntity;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "email_verification_tokens")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class EmailVerificationToken extends BaseEntity {
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @Column(name = "token_hash", nullable = false, unique = true, columnDefinition = "CHAR(64)")
+    private String tokenHash;
+
+    @Column(name = "expiration_date", nullable = false)
+    private LocalDateTime expirationDate;
+
+    @Column(name = "used", nullable = false)
+    @Builder.Default
+    private Boolean used = false;
+}

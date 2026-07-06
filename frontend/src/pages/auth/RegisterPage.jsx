@@ -13,21 +13,32 @@ const registerSchema = z.object({
   lastName: z.string().min(1, "Nom requis"),
   email: z.string().email("Adresse email invalide"),
   phone: z.string().optional(),
-  password: z.string().min(8, "Au moins 8 caractères"),
+  password: z.string()
+    .min(8, "Au moins 8 caracteres")
+    .regex(/[a-z]/, "Doit contenir une minuscule")
+    .regex(/[A-Z]/, "Doit contenir une majuscule")
+    .regex(/\d/, "Doit contenir un chiffre"),
 });
 
 export default function RegisterPage() {
   const { register: registerUser } = useAuth();
   const navigate = useNavigate();
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(registerSchema),
   });
+  const passwordValue = watch("password") || "";
+  const passwordRules = [
+    { label: "Au moins 8 caracteres", valid: passwordValue.length >= 8 },
+    { label: "Une majuscule", valid: /[A-Z]/.test(passwordValue) },
+    { label: "Une minuscule", valid: /[a-z]/.test(passwordValue) },
+    { label: "Un chiffre", valid: /\d/.test(passwordValue) },
+  ];
 
   const onSubmit = async (data) => {
     try {
       await registerUser(data);
-      toast.success("Compte créé avec succès");
-      navigate("/");
+      toast.success("Compte cree ! Verifiez votre boite mail pour activer votre compte.");
+      navigate("/login");
     } catch (err) {
       toast.error(err.response?.data?.message || "Erreur lors de la création du compte.");
     }
@@ -99,6 +110,13 @@ export default function RegisterPage() {
               {...register("password")}
             />
             {errors.password && <p className="auth-ne-error">{errors.password.message}</p>}
+            <ul style={{ listStyle: "none", padding: 0, margin: "0 0 16px", fontSize: "0.8rem" }}>
+              {passwordRules.map((rule) => (
+                <li key={rule.label} style={{ color: rule.valid ? "#16a34a" : "#94a3b8", marginBottom: "2px" }}>
+                  {rule.valid ? "✓" : "○"} {rule.label}
+                </li>
+              ))}
+            </ul>
 
             <button type="submit" className="auth-ne-submit" disabled={isSubmitting}>
               {isSubmitting ? "Création en cours..." : "Créer mon compte"}

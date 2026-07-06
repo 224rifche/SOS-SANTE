@@ -37,7 +37,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
     @Value("${wonmally.security.rate-limit.window-minutes:15}")
     private int windowMinutes;
 
-    private static final String LOGIN_PATH = "/api/v1/auth/login";
+    private static final java.util.Set<String> PROTECTED_PATHS = java.util.Set.of(
+            "/api/v1/auth/login",
+            "/api/v1/auth/forgot-password",
+            "/api/v1/auth/register",
+            "/api/v1/auth/verify-email"
+    );
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -49,13 +54,16 @@ public class RateLimitFilter extends OncePerRequestFilter {
                                     @NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
-        if (!LOGIN_PATH.equals(request.getRequestURI()) || !"POST".equalsIgnoreCase(request.getMethod())) {
+        String requestPath = request.getRequestURI();
+
+        if (!PROTECTED_PATHS.contains(requestPath)) {
             filterChain.doFilter(request, response);
             return;
         }
 
         String clientIp = IpUtils.extractClientIp(request);
-        AttemptInfo info = attempts.compute(clientIp, (ip, existing) -> {
+        String rateLimitKey = clientIp + ":" + requestPath;
+        AttemptInfo info = attempts.compute(rateLimitKey, (key, existing) -> {
             if (existing == null || existing.isExpired(windowMinutes)) {
                 return new AttemptInfo();
             }

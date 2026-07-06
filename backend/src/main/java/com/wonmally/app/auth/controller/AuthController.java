@@ -44,15 +44,11 @@ public class AuthController {
     private long refreshTokenExpirationMs;
 
     @PostMapping("/register")
-    @Operation(summary = "Créer un compte citoyen")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request,
-                                                  HttpServletRequest httpRequest,
-                                                  HttpServletResponse httpResponse) {
-        AuthResponse authResponse = authService.register(request, IpUtils.extractClientIp(httpRequest));
-        setAuthCookies(httpResponse, authResponse, false);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(authResponse);
+    @Operation(summary = "Créer un compte citoyen (necessite verification email avant connexion)")
+    public ResponseEntity<Void> register(@Valid @RequestBody RegisterRequest request,
+                                          HttpServletRequest httpRequest) {
+        authService.register(request, IpUtils.extractClientIp(httpRequest));
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping("/login")
@@ -142,6 +138,13 @@ public class AuthController {
     public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request,
                                                HttpServletRequest httpRequest) {
         authService.resetPassword(request, IpUtils.extractClientIp(httpRequest));
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/verify-email")
+    @Operation(summary = "Verifier l'adresse email via le token recu par email")
+    public ResponseEntity<Void> verifyEmail(@RequestParam String token) {
+        authService.verifyEmail(token);
         return ResponseEntity.noContent().build();
     }
 }
