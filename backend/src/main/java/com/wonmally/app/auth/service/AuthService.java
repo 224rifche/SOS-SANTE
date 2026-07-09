@@ -8,9 +8,13 @@ import com.wonmally.app.exception.AccountLockedException;
 import com.wonmally.app.exception.BadRequestException;
 import com.wonmally.app.security.CustomUserPrincipal;
 import com.wonmally.app.security.JwtService;
+import com.wonmally.app.user.entity.EmailVerificationToken;
+import com.wonmally.app.user.entity.PasswordResetToken;
 import com.wonmally.app.user.entity.RefreshToken;
 import com.wonmally.app.user.entity.Role;
 import com.wonmally.app.user.entity.User;
+import com.wonmally.app.user.repository.EmailVerificationTokenRepository;
+import com.wonmally.app.user.repository.PasswordResetTokenRepository;
 import com.wonmally.app.user.repository.RefreshTokenRepository;
 import com.wonmally.app.user.repository.RoleRepository;
 import com.wonmally.app.user.repository.UserRepository;
@@ -48,9 +52,12 @@ public class AuthService {
     private final AuthenticationManager  authenticationManager;
     private final AuditService           auditService;
     private final CitizenRepository      citizenRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailService           emailService;
+    private final EmailVerificationTokenRepository emailVerificationTokenRepository;
 
     @Transactional
-    public AuthResponse register(RegisterRequest request, String ipAddress) {
+    public void register(RegisterRequest request, String ipAddress) {
         if (userRepository.existsByEmail(request.getEmail())) {
             auditService.logAuthEventAnonymous("REGISTER_FAILED_EMAIL_EXISTS", request.getEmail(), ipAddress);
             throw new BadRequestException("Un compte existe deja avec cet email.");
@@ -77,9 +84,11 @@ public class AuthService {
                 .build();
         citizenRepository.save(citizen);
 
+        sendVerificationEmailFor(savedUser);
+
         auditService.logAuthEvent("REGISTER_SUCCESS", savedUser, ipAddress);
 
-        return buildAuthResponse(savedUser);
+
     }
 
     @Transactional
@@ -103,6 +112,11 @@ public class AuthService {
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadRequestException("Utilisateur introuvable."));
+
+        if (!Boolean.TRUE.equals(user.getVerified())) {
+            auditService.logAuthEvent("LOGIN_BLOCKED_EMAIL_NOT_VERIFIED", user, ipAddress);
+            throw new BadRequestException("Veuillez verifier votre adresse email avant de vous connecter. Consultez votre boite de reception.");
+        }
 
         user.setFailedLoginAttempts(0);
         user.setLockedUntil(null);
@@ -215,5 +229,107 @@ public class AuthService {
         byte[] tokenBytes = new byte[64];
         secureRandom.nextBytes(tokenBytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
+    }
+
+    private String generateSixDigitCode() {
+        SecureRandom secureRandom = new SecureRandom();
+        int code = 100000 + secureRandom.nextInt(900000);
+        return String.valueOf(code);
+    }
+
+    private static final int PASSWORD_RESET_TOKEN_VALIDITY_HOURS = 1;
+
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequest request, String ipAddress) {
+        userRepository.findByEmail(request.getEmail()).ifPresent(user -> {
+            passwordResetTokenRepository.deleteByUserId(user.getId());
+
+            String rawToken = generateSixDigitCode();
+            String tokenHash = HashUtils.sha256Hex(rawToken);
+
+            PasswordResetToken resetToken = PasswordResetToken.builder()
+                    .user(user)
+                    .tokenHash(tokenHash)
+                    .expirationDate(LocalDateTime.now().plusHours(PASSWORD_RESET_TOKEN_VALIDITY_HOURS))
+                    .used(false)
+                    .build();
+            passwordResetTokenRepository.save(resetToken);
+
+            emailService.sendPasswordResetEmail(user.getEmail(), rawToken);
+
+            auditService.logAuthEvent("PASSWORD_RESET_REQUESTED", user, ipAddress);
+        });
+        // Reponse identique que l'email existe ou non, pour ne pas reveler les comptes existants.
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request, String ipAddress) {
+        String tokenHash = HashUtils.sha256Hex(request.getToken());
+
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByTokenHash(tokenHash)
+                .orElseThrow(() -> new BadRequestException("Lien de reinitialisation invalide ou expire."));
+
+        if (Boolean.TRUE.equals(resetToken.getUsed())) {
+            throw new BadRequestException("Ce lien de reinitialisation a deja ete utilise.");
+        }
+
+        if (resetToken.getExpirationDate().isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("Ce lien de reinitialisation a expire. Veuillez en redemander un.");
+        }
+
+        User user = resetToken.getUser();
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        resetToken.setUsed(true);
+        passwordResetTokenRepository.save(resetToken);
+
+        refreshTokenRepository.deleteByUserId(user.getId());
+
+        auditService.logAuthEvent("PASSWORD_RESET_COMPLETED", user, ipAddress);
+    }
+
+    private static final int EMAIL_VERIFICATION_TOKEN_VALIDITY_HOURS = 24;
+
+    private void sendVerificationEmailFor(User user) {
+        emailVerificationTokenRepository.deleteByUserId(user.getId());
+
+        String rawToken = generateSixDigitCode();
+        String tokenHash = HashUtils.sha256Hex(rawToken);
+
+        EmailVerificationToken verificationToken = EmailVerificationToken.builder()
+                .user(user)
+                .tokenHash(tokenHash)
+                .expirationDate(LocalDateTime.now().plusHours(EMAIL_VERIFICATION_TOKEN_VALIDITY_HOURS))
+                .used(false)
+                .build();
+        emailVerificationTokenRepository.save(verificationToken);
+
+        emailService.sendVerificationEmail(user.getEmail(), rawToken);
+    }
+
+    @Transactional
+    public void verifyEmail(String rawToken) {
+        String tokenHash = HashUtils.sha256Hex(rawToken);
+
+        EmailVerificationToken verificationToken = emailVerificationTokenRepository.findByTokenHash(tokenHash)
+                .orElseThrow(() -> new BadRequestException("Lien de verification invalide ou expire."));
+
+        if (Boolean.TRUE.equals(verificationToken.getUsed())) {
+            throw new BadRequestException("Cet email a deja ete verifie.");
+        }
+
+        if (verificationToken.getExpirationDate().isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("Ce lien de verification a expire.");
+        }
+
+        User user = verificationToken.getUser();
+        user.setVerified(true);
+        userRepository.save(user);
+
+        verificationToken.setUsed(true);
+        emailVerificationTokenRepository.save(verificationToken);
+
+        auditService.logAuthEvent("EMAIL_VERIFIED", user, "N/A");
     }
 }

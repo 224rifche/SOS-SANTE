@@ -37,7 +37,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: wonmally-backend
     restart: unless-stopped
     depends_on:
@@ -56,7 +56,12 @@ services:
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USERNAME: ${SMTP_USERNAME:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@wonmally.com}
       SERVER_PORT: 8080
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/pom.xml:/app/pom.xml
+      - backend_maven_repo:/root/.m2
     ports:
       - "8080:8080"
     networks:
@@ -68,13 +73,16 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: wonmally-frontend
     restart: unless-stopped
     depends_on:
       - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     ports:
-      - "80:80"
+      - "5173:5173"
     networks:
       - wonmally-net
 
@@ -105,7 +113,6 @@ services:
       - mimir_data:/data
     command: 
       - "-config.file=/etc/mimir/config.yaml"
-      - "-otlp.enabled=true"
     networks:
       - wonmally-net
 
@@ -173,3 +180,4 @@ volumes:
   mimir_data:
   tempo_data:
   grafana_data:
+  backend_maven_repo:

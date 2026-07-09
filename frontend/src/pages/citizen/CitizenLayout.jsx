@@ -1,5 +1,9 @@
+import { useEffect } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { alertService } from "../../services/alertService";
+import { toast } from "react-toastify";
 import { useAuth } from "../../contexts/AuthContext";
+import logo from "../../assets/logo-wonmally.png";
 import "../../styles/citizen.css";
 
 const NAV = [
@@ -9,12 +13,34 @@ const NAV = [
 ];
 
 export default function CitizenLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout, hasRole } = useAuth();
+
+  useEffect(() => {
+    const trySync = async () => {
+      const count = alertService.getPendingAlertsCount();
+      if (count === 0) return;
+      const result = await alertService.flushPendingAlerts();
+      if (result.sent > 0) {
+        toast.success(`${result.sent} alerte(s) en attente envoyee(s) avec succes.`);
+      }
+    };
+    trySync();
+    window.addEventListener("online", trySync);
+    return () => window.removeEventListener("online", trySync);
+  }, []);
   const location = useLocation();
   const isSosFlow = location.pathname.includes("/alert")
     || location.pathname.includes("/tracking/");
+  const isAdmin = hasRole("ADMIN");
 
   const firstName = user?.firstName || "Citoyen";
+  const roleLabel = isAdmin ? "Administration - Vue Citoyen" : "Espace citoyen";
+  const greeting = isAdmin 
+    ? `Vue citoyen - ${firstName}`
+    : `Bonjour, ${firstName}`;
+  const subText = isAdmin 
+    ? "Accès administrateur à l'espace citoyen"
+    : "Votre sécurité est notre priorité. Un geste suffit pour alerter les secours.";
 
   return (
     <div className="cit-layout">
@@ -22,10 +48,10 @@ export default function CitizenLayout() {
         <header className="cit-layout-header">
           <div className="cit-layout-brand">
             <div className="cit-layout-brand-left">
-              <div className="cit-layout-brand-icon">NE</div>
+              <img src={logo} alt="Wonmally Logo" className="cit-layout-brand-logo" />
               <div>
-                <span className="cit-layout-brand-name">Nhellan Emergency</span>
-                <span className="cit-layout-brand-sub">Espace citoyen</span>
+                <span className="cit-layout-brand-name">Wonmally</span>
+                <span className="cit-layout-brand-sub">{roleLabel}</span>
               </div>
             </div>
             <button type="button" className="cit-layout-logout" onClick={logout}>
@@ -34,8 +60,8 @@ export default function CitizenLayout() {
           </div>
           {location.pathname === "/citizen" && (
             <div className="cit-layout-greeting">
-              <h1>Bonjour, {firstName}</h1>
-              <p>Votre sécurité est notre priorité. Un geste suffit pour alerter les secours.</p>
+              <h1>{greeting}</h1>
+              <p>{subText}</p>
             </div>
           )}
         </header>

@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -66,5 +67,14 @@ public class AmbulancierController {
         @Valid @RequestBody UpdateAmbulancierAvailabilityRequestDTO dto
     ) {
         return ResponseEntity.ok(ambulancierService.updateAvailability(id, dto));
+    }
+
+    @PatchMapping("/{id}/vehicle")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICAL_CENTER')")
+    public ResponseEntity<AmbulancierResponseDTO> assignVehicle(
+        @PathVariable UUID id,
+        @RequestBody Map<String, UUID> body
+    ) {
+        return ResponseEntity.ok(ambulancierService.assignVehicle(id, body.get("ambulanceId")));
     }
 }

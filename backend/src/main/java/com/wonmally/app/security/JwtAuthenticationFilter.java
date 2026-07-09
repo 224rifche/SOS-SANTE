@@ -5,6 +5,7 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -47,14 +48,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     @NonNull FilterChain         filterChain)
             throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
+        final String jwt = extractToken(request);
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (jwt == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        final String jwt = authHeader.substring(7);
 
         try {
             final String userEmail = jwtService.extractUsername(jwt);
@@ -72,24 +72,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         } catch (ExpiredJwtException ex) {
             log.debug("JWT expiré pour la requête {}: {}", request.getRequestURI(), ex.getMessage());
-            sendUnauthorized(response, request.getRequestURI(),
-                "Token expiré. Utilisez le refresh token pour renouveler votre session.");
-            return;
 
         } catch (SignatureException ex) {
             log.warn("Signature JWT invalide depuis {}: {}", request.getRemoteAddr(), ex.getMessage());
-            sendUnauthorized(response, request.getRequestURI(), "Token invalide.");
-            return;
 
         } catch (MalformedJwtException | UnsupportedJwtException | IllegalArgumentException ex) {
             log.warn("JWT malformé depuis {}: {}", request.getRemoteAddr(), ex.getMessage());
-            sendUnauthorized(response, request.getRequestURI(), "Token malformé.");
-            return;
         }
 
         filterChain.doFilter(request, response);
     }
 
+    /**
+     * Extrait le JWT soit depuis l'en-tete Authorization (Bearer), soit depuis
+     * le cookie httpOnly "wonmally_access_token" (nouvelle methode, cookies httpOnly).
+     * L'en-tete Authorization reste prioritaire pour retro-compatibilite.
+     */
+    private String extractToken(HttpServletRequest request) {
+        final String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ") && authHeader.length() > 7) {
+            return authHeader.substring(7);
+        }
+
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("wonmally_access_token".equals(cookie.getName()) && cookie.getValue() != null && !cookie.getValue().isBlank()) {
+                    return cookie.getValue();
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @SuppressWarnings("unused")
     private void sendUnauthorized(HttpServletResponse response, String path, String message) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

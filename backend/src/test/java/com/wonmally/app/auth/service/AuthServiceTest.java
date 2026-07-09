@@ -86,7 +86,7 @@ class AuthServiceTest {
                 .phone("+224600000000")
                 .build();
 
-        loginRequest = new LoginRequest("jean.dupont@example.com", "password123");
+        loginRequest = new LoginRequest("jean.dupont@example.com", "password123", false);
     }
 
     @Test
@@ -98,13 +98,8 @@ class AuthServiceTest {
         when(userRepository.save(any(User.class))).thenReturn(user);
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenReturn(new RefreshToken());
 
-        // Correction : passage du deuxième argument requis
-        AuthResponse response = authService.register(registerRequest, dummyStringParam);
+        authService.register(registerRequest, dummyStringParam);
 
-        assertNotNull(response);
-        assertEquals("access_token", response.getAccessToken());
-        assertEquals("Bearer", response.getTokenType());
-        assertNotNull(response.getRefreshToken());
 
         verify(userRepository).save(any(User.class));
         verify(refreshTokenRepository).save(any(RefreshToken.class));

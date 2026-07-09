@@ -15,6 +15,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -30,12 +31,12 @@ public class MedicalCenterService {
         Specification<MedicalCenter> spec = (root, query, cb) ->
             active == null ? cb.conjunction() : cb.equal(root.get("active"), active);
 
-        return medicalCenterRepository.findAll(spec, pageable).map(mapper::toResponse);
+        return medicalCenterRepository.findAll(spec, Objects.requireNonNull(pageable)).map(mapper::toResponse);
     }
 
     @Transactional(readOnly = true)
     public MedicalCenterResponseDTO getCenterById(UUID id) {
-        MedicalCenter center = medicalCenterRepository.findById(id)
+        MedicalCenter center = medicalCenterRepository.findById(Objects.requireNonNull(id))
             .orElseThrow(() -> new ResourceNotFoundException("Centre medical introuvable"));
         return mapper.toResponse(center);
     }
@@ -57,30 +58,30 @@ public class MedicalCenterService {
             .active(true)
             .build();
 
-        return mapper.toResponse(medicalCenterRepository.save(center));
+        return mapper.toResponse(Objects.requireNonNull(medicalCenterRepository.save(center)));
     }
 
     @Transactional
     public MedicalCenterResponseDTO updateCenter(UUID id, UpdateMedicalCenterRequestDTO dto) {
-        MedicalCenter center = medicalCenterRepository.findById(id)
+        MedicalCenter center = medicalCenterRepository.findById(Objects.requireNonNull(id))
             .orElseThrow(() -> new ResourceNotFoundException("Centre medical introuvable"));
 
         mapper.updateEntityFromDto(center, dto);
-        return mapper.toResponse(medicalCenterRepository.save(center));
+        return mapper.toResponse(Objects.requireNonNull(medicalCenterRepository.save(center)));
     }
 
     @Transactional
     public MedicalCenterResponseDTO updateStatus(UUID id, UpdateMedicalCenterStatusRequestDTO dto) {
-        MedicalCenter center = medicalCenterRepository.findById(id)
+        MedicalCenter center = medicalCenterRepository.findById(Objects.requireNonNull(id))
             .orElseThrow(() -> new ResourceNotFoundException("Centre medical introuvable"));
 
         center.setActive(dto.active());
-        return mapper.toResponse(medicalCenterRepository.save(center));
+        return mapper.toResponse(Objects.requireNonNull(medicalCenterRepository.save(center)));
     }
 
     @Transactional
     public void deleteCenter(UUID id) {
-        MedicalCenter center = medicalCenterRepository.findById(id)
+        MedicalCenter center = medicalCenterRepository.findById(Objects.requireNonNull(id))
             .orElseThrow(() -> new ResourceNotFoundException("Centre medical introuvable"));
 
         boolean hasInterventions = !interventionRepository
@@ -92,6 +93,6 @@ public class MedicalCenterService {
                 "Impossible de supprimer ce centre : des interventions actives y sont liees");
         }
 
-        medicalCenterRepository.delete(center);
+        medicalCenterRepository.delete(Objects.requireNonNull(center));
     }
 }

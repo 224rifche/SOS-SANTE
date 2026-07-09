@@ -1,4 +1,4 @@
-/* Nhellan Emergency — Espace Citoyen (mobile-first) */
+/* Wonmally — Espace Citoyen (desktop-first) */
 
 :root {
   --cit-bg: #f4f6f9;
@@ -9,19 +9,26 @@
   --cit-muted: #64748b;
   --cit-red: #e53935;
   --cit-red-dark: #c62828;
+  --cit-max-width: 1200px;
   --cit-green: #2e7d32;
   --cit-blue: #1565c0;
 }
 
 .cit-layout {
   min-height: 100vh;
-  max-width: 480px;
+  max-width: var(--cit-max-width);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   background: var(--cit-bg);
   font-family: "Inter", "Segoe UI", system-ui, sans-serif;
   color: var(--cit-text);
+}
+
+@media (max-width: 768px) {
+  .cit-layout {
+    max-width: 100%;
+  }
 }
 
 .cit-layout-header {
@@ -55,6 +62,12 @@
   justify-content: center;
   font-weight: 800;
   font-size: 0.75rem;
+}
+
+.cit-layout-brand-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
 }
 
 .cit-layout-brand-name {
@@ -219,14 +232,14 @@
 }
 
 .cit-stat-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 10px;
-  font-size: 1rem;
+  margin-bottom: 14px;
+  font-size: 1.15rem;
 }
 
 .cit-stat-icon.red { background: rgba(229, 57, 53, 0.1); color: var(--cit-red); }
@@ -688,4 +701,24 @@
   .cit-grid-2 {
     grid-template-columns: repeat(4, 1fr);
   }
+}
+
+/* ============================================================
+   Micro-interactions dashboard citoyen (non couvertes par Bootstrap)
+   ============================================================ */
+.cit-card-hover {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cit-card-hover:hover {
+  transform: translateY(-3px);
+}
+
+.cit-sos-pulse {
+  animation: cit-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes cit-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.35); }
+  50% { box-shadow: 0 0 0 14px rgba(229, 57, 53, 0); }
 }

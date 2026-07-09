@@ -36,6 +36,10 @@ public class AlertWebSocketService {
                 "/topic/ambulances/" + ambulanceResponse.id() + "/position", ambulanceResponse);
     }
 
+    public void broadcastAmbulanceStatus(AmbulanceResponseDTO ambulanceResponse) {
+        messagingTemplate.convertAndSend("/topic/ambulances", ambulanceResponse);
+    }
+
     public void broadcastNotification(UUID userId, NotificationResponseDTO notification) {
         messagingTemplate.convertAndSend("/topic/notifications/" + userId, notification);
     }

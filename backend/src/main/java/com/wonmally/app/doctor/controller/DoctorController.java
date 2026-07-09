@@ -45,26 +45,30 @@ public class DoctorController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<DoctorResponseDTO> createDoctor(
-        @Valid @RequestBody CreateDoctorRequestDTO dto
-    ) {
+            @Valid @RequestBody CreateDoctorRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(doctorService.createDoctor(dto));
     }
 
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<DoctorResponseDTO> updateStatus(
-        @PathVariable UUID id,
-        @Valid @RequestBody UpdateDoctorStatusRequestDTO dto
-    ) {
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateDoctorStatusRequestDTO dto) {
         return ResponseEntity.ok(doctorService.updateStatus(id, dto));
     }
 
     @PatchMapping("/{id}/availability")
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<DoctorResponseDTO> updateAvailability(
-        @PathVariable UUID id,
-        @Valid @RequestBody UpdateDoctorAvailabilityRequestDTO dto
-    ) {
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateDoctorAvailabilityRequestDTO dto) {
         return ResponseEntity.ok(doctorService.updateAvailability(id, dto));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteDoctor(@PathVariable UUID id) {
+        doctorService.deleteDoctor(id);
+        return ResponseEntity.noContent().build();
     }
 }

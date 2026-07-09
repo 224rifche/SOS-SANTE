@@ -216,6 +216,11 @@ public class AlertService {
         alert.setStatus(targetStatus);
         Alert saved = alertRepository.save(alert);
 
+        interventionRepository.findByAlertId(saved.getId()).ifPresent(intervention -> {
+            intervention.updateStatus(targetStatus);
+            interventionRepository.save(intervention);
+        });
+
         logCurrentUserAction(
             targetStatus == InterventionStatus.VALIDEE ? "ALERT_VALIDATED" : "ALERT_REJECTED",
             saved.getId()
@@ -224,17 +229,24 @@ public class AlertService {
         AlertResponse response = alertMapper.toResponse(saved);
         webSocketService.broadcastNewAlert(response);
 
-        UUID citizenUserId = alert.getCitizen().getUser().getId();
-        if (targetStatus == InterventionStatus.VALIDEE) {
-            notificationService.notifyUser(citizenUserId,
-                "Alerte validee",
-                "Votre alerte a ete validee. Une ambulance va etre affectee.",
-                "ALERT_VALIDATED");
-        } else {
-            notificationService.notifyUser(citizenUserId,
-                "Alerte rejetee",
-                "Votre alerte a ete rejetee par le centre medical.",
-                "ALERT_REJECTED");
+        // Notification best-effort : si le compte du citoyen a ete supprime
+        // entre-temps (donnee orpheline), la validation/rejet de l'alerte
+        // doit quand meme reussir - seule la notification est sautee.
+        try {
+            UUID citizenUserId = alert.getCitizen().getUser().getId();
+            if (targetStatus == InterventionStatus.VALIDEE) {
+                notificationService.notifyUser(citizenUserId,
+                    "Alerte validee",
+                    "Votre alerte a ete validee. Une ambulance va etre affectee.",
+                    "ALERT_VALIDATED");
+            } else {
+                notificationService.notifyUser(citizenUserId,
+                    "Alerte rejetee",
+                    "Votre alerte a ete rejetee par le centre medical.",
+                    "ALERT_REJECTED");
+            }
+        } catch (jakarta.persistence.EntityNotFoundException ex) {
+            // Compte citoyen orphelin : on ignore silencieusement la notification.
         }
 
         return response;

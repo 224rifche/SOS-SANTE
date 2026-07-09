@@ -41,14 +41,19 @@ export default function SOSPage() {
     }
     setSubmitting(true);
     try {
-      const alert = await alertService.createAlert({
+      const result = await alertService.createAlert({
         categoryId: formData.categoryId,
         latitude: position.latitude,
         longitude: position.longitude,
         description: formData.description,
       });
-      toast.success("Alerte envoyée. Les secours ont été notifiés.");
-      navigate(`/citizen/alert/${alert.id}/confirmation`);
+      if (result.queued) {
+        toast.warning("Pas de connexion : votre alerte sera envoyee automatiquement des que possible.");
+        navigate("/citizen");
+      } else {
+        toast.success("Alerte envoyee. Les secours ont ete notifies.");
+        navigate(`/citizen/alert/${result.data.id}/confirmation`);
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || "Erreur lors de l'envoi.");
     } finally {
@@ -87,7 +92,7 @@ export default function SOSPage() {
               {categories.map((cat) => (
                 <label
                   key={cat.id}
-                  className="cit-card mb-0"
+                  className="cit-card cit-card-hover mb-0"
                   style={{
                     cursor: "pointer",
                     borderColor: Number(selectedCategoryId) === cat.id ? "#e53935" : undefined,

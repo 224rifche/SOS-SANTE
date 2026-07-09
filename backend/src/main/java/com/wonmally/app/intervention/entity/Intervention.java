@@ -55,6 +55,30 @@ public class Intervention extends BaseEntity {
     @Builder.Default
     private Boolean archived = false;
 
+    // Constantes vitales relevees par l'ambulancier lors de la prise en charge.
+    @Column(name = "heart_rate", length = 10)
+    private String heartRate;
+
+    @Column(name = "blood_pressure", length = 10)
+    private String bloodPressure;
+
+    @Column(name = "spo2", length = 10)
+    private String spo2;
+
+    @Column(name = "temperature", length = 10)
+    private String temperature;
+
+    @Column(name = "consciousness", length = 20)
+    private String consciousness;
+
+    @Column(name = "oxygen_placed", nullable = false)
+    @Builder.Default
+    private Boolean oxygenPlaced = false;
+
+    @Column(name = "ecg_done", nullable = false)
+    @Builder.Default
+    private Boolean ecgDone = false;
+
     /**
      * Met a jour le statut courant de l'intervention.
      * La logique de transition (machine a etats) est validee au niveau du Service.

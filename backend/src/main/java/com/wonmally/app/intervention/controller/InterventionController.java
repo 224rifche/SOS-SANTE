@@ -14,6 +14,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @RestController
@@ -28,13 +30,20 @@ public class InterventionController {
     @PreAuthorize("hasAnyRole('AMBULANCIER', 'ADMIN')")
     public ResponseEntity<InterventionResponseDTO> getActiveIntervention(
             @AuthenticationPrincipal CustomUserPrincipal principal) {
-        return ResponseEntity.of(interventionService.getActiveInterventionForUser(principal.getUserId()));
+        return ResponseEntity.of(Objects.requireNonNull(interventionService.getActiveInterventionForUser(principal.getUserId())));
     }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MEDICAL_CENTER')")
     public ResponseEntity<Page<InterventionResponseDTO>> listInterventions(Pageable pageable) {
         return ResponseEntity.ok(interventionService.listInterventions(pageable));
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('DOCTOR')")
+    public ResponseEntity<List<InterventionResponseDTO>> getMyInterventions(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        return ResponseEntity.ok(interventionService.getInterventionsForDoctor(principal.getUserId()));
     }
 
     @GetMapping("/{id}")
@@ -44,9 +53,19 @@ public class InterventionController {
     }
 
     @GetMapping("/by-alert/{alertId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICAL_CENTER', 'AMBULANCIER', 'DOCTOR')")
-    public ResponseEntity<InterventionResponseDTO> getByAlertId(@PathVariable UUID alertId) {
-        return ResponseEntity.ok(interventionService.getInterventionByAlertId(alertId));
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<InterventionResponseDTO> getByAlertId(
+            @PathVariable UUID alertId,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        return ResponseEntity.ok(interventionService.getInterventionByAlertIdSecured(alertId, principal));
+    }
+
+    @PatchMapping("/{id}/vitals")
+    @PreAuthorize("hasAnyRole('AMBULANCIER', 'ADMIN')")
+    public ResponseEntity<InterventionResponseDTO> updateVitalSigns(
+            @PathVariable UUID id,
+            @RequestBody com.wonmally.app.intervention.dto.VitalSignsRequestDTO dto) {
+        return ResponseEntity.ok(interventionService.updateVitalSigns(id, dto));
     }
 
     @PatchMapping("/{id}/status")

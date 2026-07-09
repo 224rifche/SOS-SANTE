@@ -49,7 +49,7 @@ cp .env.example .env
 docker compose up --build
 
 # Accès :
-# Frontend       -> http://localhost
+# Frontend       -> http://localhost:5173
 # API Backend    -> http://localhost:8080/api/v1
 # Swagger UI     -> http://localhost:8080/swagger-ui.html
 # Grafana        -> http://localhost:3000

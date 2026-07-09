@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +33,7 @@ public class EmergencyCategoryService {
 
     @Transactional(readOnly = true)
     public EmergencyCategoryResponseDTO getCategoryById(Long id) {
-        EmergencyCategory category = categoryRepository.findById(id)
+        EmergencyCategory category = categoryRepository.findById(Objects.requireNonNull(id))
             .orElseThrow(() -> new ResourceNotFoundException("Categorie d'urgence introuvable"));
         return mapper.toResponse(category);
     }
@@ -49,12 +50,12 @@ public class EmergencyCategoryService {
             .description(dto.description())
             .build();
 
-        return mapper.toResponse(categoryRepository.save(category));
+        return mapper.toResponse(Objects.requireNonNull(categoryRepository.save(category)));
     }
 
     @Transactional
     public EmergencyCategoryResponseDTO updateCategory(Long id, UpdateEmergencyCategoryRequestDTO dto) {
-        EmergencyCategory category = categoryRepository.findById(id)
+        EmergencyCategory category = categoryRepository.findById(Objects.requireNonNull(id))
             .orElseThrow(() -> new ResourceNotFoundException("Categorie d'urgence introuvable"));
 
         if (!category.getName().equalsIgnoreCase(dto.name())
@@ -63,12 +64,12 @@ public class EmergencyCategoryService {
         }
 
         mapper.updateEntityFromDto(category, dto);
-        return mapper.toResponse(categoryRepository.save(category));
+        return mapper.toResponse(Objects.requireNonNull(categoryRepository.save(category)));
     }
 
     @Transactional
     public void deleteCategory(Long id) {
-        EmergencyCategory category = categoryRepository.findById(id)
+        EmergencyCategory category = categoryRepository.findById(Objects.requireNonNull(id))
             .orElseThrow(() -> new ResourceNotFoundException("Categorie d'urgence introuvable"));
 
         if (alertRepository.existsByCategoryId(id)) {
@@ -76,6 +77,6 @@ public class EmergencyCategoryService {
                 "Impossible de supprimer cette categorie : des alertes y sont associees");
         }
 
-        categoryRepository.delete(category);
+        categoryRepository.delete(Objects.requireNonNull(category));
     }
 }
