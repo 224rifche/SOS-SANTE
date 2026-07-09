@@ -4,9 +4,8 @@ import "react-toastify/dist/ReactToastify.css";
 import { AuthProvider } from "./contexts/AuthContext";
 import { WebSocketProvider } from "./contexts/WebSocketContext";
 import AppRoutes from "./routes/AppRoutes";
-import "./styles/global.css";
-
 import "bootstrap/dist/css/bootstrap.min.css";
+import "./styles/global.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
 

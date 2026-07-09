@@ -231,6 +231,12 @@ public class AuthService {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
     }
 
+    private String generateSixDigitCode() {
+        SecureRandom secureRandom = new SecureRandom();
+        int code = 100000 + secureRandom.nextInt(900000);
+        return String.valueOf(code);
+    }
+
     private static final int PASSWORD_RESET_TOKEN_VALIDITY_HOURS = 1;
 
     @Transactional
@@ -238,7 +244,7 @@ public class AuthService {
         userRepository.findByEmail(request.getEmail()).ifPresent(user -> {
             passwordResetTokenRepository.deleteByUserId(user.getId());
 
-            String rawToken = generateSecureRandomToken();
+            String rawToken = generateSixDigitCode();
             String tokenHash = HashUtils.sha256Hex(rawToken);
 
             PasswordResetToken resetToken = PasswordResetToken.builder()
@@ -249,8 +255,7 @@ public class AuthService {
                     .build();
             passwordResetTokenRepository.save(resetToken);
 
-            String resetLink = "http://localhost:5173/reset-password?token=" + rawToken;
-            emailService.sendPasswordResetEmail(user.getEmail(), resetLink);
+            emailService.sendPasswordResetEmail(user.getEmail(), rawToken);
 
             auditService.logAuthEvent("PASSWORD_RESET_REQUESTED", user, ipAddress);
         });
@@ -289,7 +294,7 @@ public class AuthService {
     private void sendVerificationEmailFor(User user) {
         emailVerificationTokenRepository.deleteByUserId(user.getId());
 
-        String rawToken = generateSecureRandomToken();
+        String rawToken = generateSixDigitCode();
         String tokenHash = HashUtils.sha256Hex(rawToken);
 
         EmailVerificationToken verificationToken = EmailVerificationToken.builder()
@@ -300,8 +305,7 @@ public class AuthService {
                 .build();
         emailVerificationTokenRepository.save(verificationToken);
 
-        String verificationLink = "http://localhost:5173/verify-email?token=" + rawToken;
-        emailService.sendVerificationEmail(user.getEmail(), verificationLink);
+        emailService.sendVerificationEmail(user.getEmail(), rawToken);
     }
 
     @Transactional

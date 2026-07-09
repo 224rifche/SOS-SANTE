@@ -30,11 +30,6 @@
   margin: 0 auto;
 }
 
-@media (max-width: 768px) {
-  .reg-app-wrapper {
-    max-width: 100%;
-  }
-}
 
 /* ---------- Sidebar ---------- */
 
@@ -146,11 +141,19 @@
 
 .reg-sidebar-profile {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
   padding: 12px 10px;
   border-top: 1px solid var(--reg-border);
-  margin-top: 10px;
+  margin-top: auto;
+}
+
+.reg-profile-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
 }
 
 .reg-profile-avatar {
@@ -178,6 +181,25 @@
   font-size: 0.72rem;
   color: var(--reg-text-muted);
   display: block;
+}
+
+.reg-logout-btn {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: var(--reg-text-muted);
+  font-size: 0.75rem;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.reg-logout-btn:hover {
+  color: var(--reg-red);
+  border-color: var(--reg-red);
+  background-color: var(--reg-red-bg);
 }
 
 /* ---------- Main area ---------- */
@@ -695,6 +717,12 @@
 
 /* ---------- Tables (Ambulances / Medecins / Historique) ---------- */
 
+.reg-table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .reg-table {
   width: 100%;
   border-collapse: collapse;
@@ -774,4 +802,132 @@
   text-align: center;
   color: var(--reg-text-muted);
   font-size: 0.85rem;
+}
+
+/* ============================================================
+   Responsive Layout (hamburger menu button, sidebar transitions, overlay)
+   Moved to the end to ensure it overrides base sidebar and layout styles.
+   ============================================================ */
+
+.reg-mobile-toggle {
+  display: none;
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 1040;
+  background: var(--reg-sidebar-bg);
+  color: var(--reg-text);
+  border: 1px solid var(--reg-border);
+  border-radius: 0.5rem;
+  width: 40px;
+  height: 40px;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.reg-sidebar-close {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--reg-text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.reg-sidebar-overlay {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .reg-app-wrapper {
+    max-width: 100%;
+  }
+
+  .reg-mobile-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .reg-sidebar-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 14px;
+    top: 14px;
+  }
+
+  .reg-sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1020;
+  }
+
+  .reg-sidebar {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    height: 100vh !important;
+    width: 240px !important;
+    z-index: 1030 !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.2s ease !important;
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  .reg-sidebar.open {
+    transform: translateX(0) !important;
+  }
+
+  .reg-header {
+    padding: 12px 16px 12px 3.5rem !important; /* Space for hamburger button */
+  }
+
+  .reg-header-right {
+    gap: 10px;
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .reg-search-input {
+    min-width: 100% !important;
+  }
+
+  .reg-content {
+    padding: 16px !important;
+  }
+
+  .reg-stats-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+}
+
+@media (max-width: 575px) {
+  .reg-stats-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Bouton retour circulaire - utilise sur les pages de detail/affectation */
+.back-circle-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+}
+.back-circle-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
 }

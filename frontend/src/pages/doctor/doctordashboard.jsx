@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { useWebSocket } from "../../contexts/WebSocketContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { doctorService } from "../../services/doctorService";
+import { interventionService } from "../../services/interventionService";
 import { statusLabel } from "../medical-center/regulationUtils";
 
 export default function DoctorDashboard() {
@@ -21,7 +22,8 @@ export default function DoctorDashboard() {
     }
 
     doctorService.getMyProfile()
-      .then(setProfile)
+      .then((data) => { setProfile(data); return interventionService.listMine(); })
+      .then((list) => setInterventions(list || []))
       .catch(() => toast.error("Impossible de charger votre profil médecin."))
       .finally(() => setLoading(false));
   }, [isAdmin]);

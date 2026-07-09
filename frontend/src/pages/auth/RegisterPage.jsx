@@ -38,7 +38,7 @@ export default function RegisterPage() {
     try {
       await registerUser(data);
       toast.success("Compte cree ! Verifiez votre boite mail pour activer votre compte.");
-      navigate("/login");
+      navigate("/verify-email", { state: { email: data.email } });
     } catch (err) {
       toast.error(err.response?.data?.message || "Erreur lors de la création du compte.");
     }

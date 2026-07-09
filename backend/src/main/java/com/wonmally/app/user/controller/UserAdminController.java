@@ -3,7 +3,6 @@ package com.wonmally.app.user.controller;
 import com.wonmally.app.user.dto.*;
 import com.wonmally.app.user.service.UserAdminService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

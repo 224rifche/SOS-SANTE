@@ -1,31 +1,42 @@
-import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { authService } from "../../services/authService";
 import "../../styles/global.css";
 import logo from "../../assets/logo-wonmally.png";
 import ambulance from "../../assets/ambulance.png";
 
 export default function VerifyEmailPage() {
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
-  const [status, setStatus] = useState("loading");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const emailFromState = location.state?.email || "";
 
-  useEffect(() => {
-    if (!token) {
-      setStatus("invalid");
+  const [email, setEmail] = useState(emailFromState);
+  const [code, setCode] = useState("");
+  const [status, setStatus] = useState("idle"); // idle | loading | success | error
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!code.trim() || code.trim().length !== 6) {
+      setErrorMessage("Merci de saisir le code a 6 chiffres recu par email.");
       return;
     }
-    authService.verifyEmail(token)
-      .then(() => setStatus("success"))
-      .catch((err) => {
-        const message = err.response?.data?.message || "";
-        if (message.includes("deja ete verifie") || message.includes("déjà été vérifié")) {
-          setStatus("success");
-        } else {
-          setStatus("error");
-        }
-      });
-  }, [token]);
+
+    setStatus("loading");
+    setErrorMessage("");
+    try {
+      await authService.verifyEmail(code.trim());
+      setStatus("success");
+    } catch (err) {
+      const message = err.response?.data?.message || "";
+      if (message.includes("deja ete verifie") || message.includes("déjà été vérifié")) {
+        setStatus("success");
+      } else {
+        setStatus("error");
+        setErrorMessage(message || "Code invalide ou expire. Verifiez le code recu par email.");
+      }
+    }
+  };
 
   return (
     <div className="auth-ne-wrapper" style={{ backgroundImage: `linear-gradient(rgba(11,21,36,0.85), rgba(11,21,36,0.85)), url(${ambulance})` }}>
@@ -36,14 +47,7 @@ export default function VerifyEmailPage() {
             <h2 className="h5 fw-bold mb-0">Wonmally</h2>
           </div>
 
-          {status === "loading" && (
-            <>
-              <h2 className="auth-ne-form-title">Verification en cours...</h2>
-              <p className="auth-ne-form-sub">Merci de patienter un instant.</p>
-            </>
-          )}
-
-          {status === "success" && (
+          {status === "success" ? (
             <>
               <h2 className="auth-ne-form-title">Email verifie !</h2>
               <p className="auth-ne-form-sub">
@@ -53,27 +57,56 @@ export default function VerifyEmailPage() {
                 <Link to="/login">Se connecter</Link>
               </p>
             </>
-          )}
-
-          {status === "error" && (
+          ) : (
             <>
-              <h2 className="auth-ne-form-title">Lien invalide</h2>
+              <h2 className="auth-ne-form-title">Verifiez votre email</h2>
               <p className="auth-ne-form-sub">
-                Ce lien de verification est invalide, a deja ete utilise, ou a expire.
+                Saisissez le code a 6 chiffres recu par email pour activer votre compte.
               </p>
-              <p className="auth-ne-footer">
-                <Link to="/login">Retour a la connexion</Link>
-              </p>
-            </>
-          )}
 
-          {status === "invalid" && (
-            <>
-              <h2 className="auth-ne-form-title">Lien incomplet</h2>
-              <p className="auth-ne-form-sub">
-                Ce lien de verification est incomplet.
-              </p>
-              <p className="auth-ne-footer">
+              {errorMessage && (
+                <div className="alert alert-danger py-2 small">{errorMessage}</div>
+              )}
+
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <label className="form-label small">Adresse email</label>
+                  <input
+                    type="email"
+                    className="form-control"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="votre@email.com"
+                    disabled={status === "loading"}
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label small">Code de verification</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    className="form-control text-center"
+                    style={{ letterSpacing: "0.5em", fontSize: "1.5rem", fontWeight: "700" }}
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="000000"
+                    autoFocus
+                    disabled={status === "loading"}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary w-100"
+                  disabled={status === "loading" || code.length !== 6}
+                >
+                  {status === "loading" ? "Verification..." : "Verifier mon compte"}
+                </button>
+              </form>
+
+              <p className="auth-ne-footer mt-3">
                 <Link to="/login">Retour a la connexion</Link>
               </p>
             </>

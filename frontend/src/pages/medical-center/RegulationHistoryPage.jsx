@@ -31,30 +31,32 @@ export default function RegulationHistoryPage() {
         ) : closed.length === 0 ? (
           <div className="reg-empty-state">Aucune intervention clôturée pour le moment.</div>
         ) : (
-          <table className="reg-table">
-            <thead>
-              <tr>
-                <th>Centre médical</th>
-                <th>Ambulance</th>
-                <th>Médecin</th>
-                <th>Statut final</th>
-                <th>Démarrée</th>
-                <th>Terminée</th>
-              </tr>
-            </thead>
-            <tbody>
-              {closed.map((i) => (
-                <tr key={i.id}>
-                  <td>{i.medicalCenterName || "—"}</td>
-                  <td>{i.ambulanceRegistrationNumber || "—"}</td>
-                  <td>{i.doctorName || "—"}</td>
-                  <td>{statusLabel(i.currentStatus)}</td>
-                  <td>{i.startedAt ? new Date(i.startedAt).toLocaleString("fr-FR") : "—"}</td>
-                  <td>{i.completedAt ? new Date(i.completedAt).toLocaleString("fr-FR") : "—"}</td>
+          <div className="reg-table-responsive">
+            <table className="reg-table">
+              <thead>
+                <tr>
+                  <th>Centre médical</th>
+                  <th>Ambulance</th>
+                  <th>Médecin</th>
+                  <th>Statut final</th>
+                  <th>Démarrée</th>
+                  <th>Terminée</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {closed.map((i) => (
+                  <tr key={i.id}>
+                    <td>{i.medicalCenterName || "—"}</td>
+                    <td>{i.ambulanceRegistrationNumber || "—"}</td>
+                    <td>{i.doctorName || "—"}</td>
+                    <td>{statusLabel(i.currentStatus)}</td>
+                    <td>{i.startedAt ? new Date(i.startedAt).toLocaleString("fr-FR") : "—"}</td>
+                    <td>{i.completedAt ? new Date(i.completedAt).toLocaleString("fr-FR") : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </>

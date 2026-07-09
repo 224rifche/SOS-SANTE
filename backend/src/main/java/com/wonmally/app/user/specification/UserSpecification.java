@@ -12,7 +12,7 @@ public class UserSpecification {
     public static Specification<User> hasRole(String roleName) {
         return (root, query, cb) -> {
             if (roleName == null || roleName.isBlank()) return cb.conjunction();
-            query.distinct(true);
+            if (query != null) query.distinct(true);
             return cb.equal(root.join("roles").get("name"), roleName);
         };
     }

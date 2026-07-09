@@ -4,6 +4,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 
+import java.util.Objects;
+
 /**
  * Utilitaire de creation des cookies httpOnly pour les tokens JWT.
  *
@@ -41,7 +43,7 @@ public final class CookieUtils {
 
     private static void addCookie(HttpServletResponse response, String name, String value,
                                    boolean rememberMe, int maxAgeSeconds) {
-        ResponseCookie cookie = ResponseCookie.from(name, value)
+        ResponseCookie cookie = ResponseCookie.from(Objects.requireNonNull(name), Objects.requireNonNull(value))
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("None")

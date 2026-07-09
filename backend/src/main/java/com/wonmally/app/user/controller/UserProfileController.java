@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Objects;
+
 @RestController
 @RequestMapping("/api/v1/users/me")
 @RequiredArgsConstructor
@@ -34,7 +36,7 @@ public class UserProfileController {
     public ResponseEntity<UserProfileResponseDTO> getProfile(
         @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
-        return ResponseEntity.ok(userProfileService.getCurrentProfile(principal.getUserId()));
+        return ResponseEntity.ok(userProfileService.getCurrentProfile(Objects.requireNonNull(principal.getUserId())));
     }
 
     @PutMapping
@@ -43,7 +45,7 @@ public class UserProfileController {
         @AuthenticationPrincipal CustomUserPrincipal principal,
         @Valid @RequestBody UpdateProfileRequestDTO dto
     ) {
-        return ResponseEntity.ok(userProfileService.updateProfile(principal.getUserId(), dto));
+        return ResponseEntity.ok(userProfileService.updateProfile(Objects.requireNonNull(principal.getUserId()), dto));
     }
 
     @PatchMapping("/password")
@@ -52,7 +54,7 @@ public class UserProfileController {
         @AuthenticationPrincipal CustomUserPrincipal principal,
         @Valid @RequestBody ChangePasswordRequestDTO dto
     ) {
-        userProfileService.changePassword(principal.getUserId(), dto);
+        userProfileService.changePassword(Objects.requireNonNull(principal.getUserId()), dto);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

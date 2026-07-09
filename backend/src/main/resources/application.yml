@@ -30,8 +30,11 @@ spring:
     port: ${SMTP_PORT:587}
     username: ${SMTP_USERNAME:}
     password: ${SMTP_PASSWORD:}
+    from: ${SMTP_FROM:noreply@wonmally.com}
+    test-connection: true
     properties:
       mail:
+        debug: true
         smtp:
           auth: true
           starttls:
@@ -56,6 +59,10 @@ wonmally:
     rate-limit:
       max-attempts: ${RATE_LIMIT_MAX_ATTEMPTS:10}     # tentatives /login par IP
       window-minutes: ${RATE_LIMIT_WINDOW_MINUTES:15} # durée de la fenêtre
+ 
+brevo:
+  api-key: ${BREVO_API_KEY:}
+  sender-name: ${BREVO_SENDER_NAME:Wonmally}
 
 springdoc:
   api-docs:
@@ -86,5 +93,7 @@ logging:
     root: INFO
     com.wonmally.app: DEBUG
     org.springframework.security: INFO
+    org.springframework.mail: DEBUG
+    com.sun.mail: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

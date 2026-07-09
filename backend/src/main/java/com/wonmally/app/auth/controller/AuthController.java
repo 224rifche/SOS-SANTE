@@ -23,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Objects;
 import java.util.Set;
 
 @RestController
@@ -102,7 +103,7 @@ public class AuthController {
                 .roles(Set.of(adminRole))
                 .build();
 
-        userRepository.save(admin);
+        Objects.requireNonNull(userRepository.save(admin));
         return ResponseEntity.ok("Admin créé avec succès: admin@wonmally.com / admin123");
     }
 
@@ -120,7 +121,7 @@ public class AuthController {
     @GetMapping("/me")
     @Operation(summary = "Recuperer les informations de l'utilisateur authentifie")
     public ResponseEntity<UserProfileResponseDTO> me(@org.springframework.security.core.annotation.AuthenticationPrincipal CustomUserPrincipal principal) {
-        User user = userRepository.findById(principal.getUserId())
+        User user = userRepository.findById(Objects.requireNonNull(principal.getUserId()))
                 .orElseThrow(() -> new BadRequestException("Utilisateur introuvable."));
         return ResponseEntity.ok(userMapper.toProfileResponse(user));
     }

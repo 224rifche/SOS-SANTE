@@ -1,6 +1,7 @@
 package com.wonmally.app.geolocation.service;
 
 import com.wonmally.app.geolocation.dto.*;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -38,7 +39,7 @@ public class GeolocationService {
                     candidate.coordinates().longitude().doubleValue()
                 )))
                 .build())
-            .sorted(Comparator.comparingDouble(NearbyResultDTO::distanceKm))
+            .sorted(Comparator.comparingDouble((@NonNull NearbyResultDTO r) -> r.distanceKm()))
             .toList();
 
         int limit = (request.maxResults() != null && request.maxResults() > 0)

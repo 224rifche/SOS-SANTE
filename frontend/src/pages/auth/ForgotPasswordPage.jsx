@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { authService } from "../../services/authService";
 import { toast } from "react-toastify";
 import "../../styles/global.css";
@@ -14,8 +14,10 @@ const forgotPasswordSchema = z.object({
 });
 
 export default function ForgotPasswordPage() {
+  const navigate = useNavigate();
   const [submitted, setSubmitted] = useState(false);
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(forgotPasswordSchema),
   });
 
@@ -23,6 +25,9 @@ export default function ForgotPasswordPage() {
     try {
       await authService.forgotPassword(data.email);
       setSubmitted(true);
+      setTimeout(() => {
+        navigate("/reset-password", { state: { email: data.email } });
+      }, 2000);
     } catch (err) {
       toast.error(err.response?.data?.message || "Une erreur est survenue. Veuillez reessayer.");
     }
@@ -39,10 +44,10 @@ export default function ForgotPasswordPage() {
 
           {submitted ? (
             <>
-              <h2 className="auth-ne-form-title">Email envoye</h2>
+              <h2 className="auth-ne-form-title">Code envoye</h2>
               <p className="auth-ne-form-sub">
-                Si un compte existe avec cette adresse, un lien de reinitialisation vient de vous etre envoye par email.
-                Verifiez votre boite de reception (et vos spams).
+                Si un compte existe avec cette adresse, un code de reinitialisation vient de vous etre envoye par email.
+                Verifiez votre boite de reception (et vos spams). Redirection...
               </p>
               <p className="auth-ne-footer">
                 <Link to="/login">Retour a la connexion</Link>
@@ -51,8 +56,7 @@ export default function ForgotPasswordPage() {
           ) : (
             <>
               <h2 className="auth-ne-form-title">Mot de passe oublie</h2>
-              <p className="auth-ne-form-sub">Saisissez votre email pour recevoir un lien de reinitialisation</p>
-
+              <p className="auth-ne-form-sub">Saisissez votre email pour recevoir un code de reinitialisation</p>
               <form onSubmit={handleSubmit(onSubmit)} noValidate>
                 <label className="auth-ne-label" htmlFor="email">Email</label>
                 <input
@@ -63,12 +67,10 @@ export default function ForgotPasswordPage() {
                   {...register("email")}
                 />
                 {errors.email && <p className="auth-ne-error">{errors.email.message}</p>}
-
                 <button type="submit" className="auth-ne-submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Envoi..." : "Envoyer le lien"}
+                  {isSubmitting ? "Envoi..." : "Envoyer le code"}
                 </button>
               </form>
-
               <p className="auth-ne-footer">
                 <Link to="/login">Retour a la connexion</Link>
               </p>

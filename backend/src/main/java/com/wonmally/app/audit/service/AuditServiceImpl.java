@@ -16,7 +16,8 @@ import java.util.UUID;
  * Implementation asynchrone de l'audit.
  *
  * @Async : l'ecriture en DB se fait dans un thread separe.
- * Propagation.REQUIRES_NEW : l'audit survit a un rollback du service appelant.
+ *        Propagation.REQUIRES_NEW : l'audit survit a un rollback du service
+ *        appelant.
  */
 @Slf4j
 @Service

@@ -84,7 +84,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/admin/**")
                     .hasRole("ADMIN")
                 .requestMatchers("/api/v1/doctors/**")
-                    .hasAnyRole("DOCTOR", "ADMIN")
+                    .hasAnyRole("DOCTOR", "ADMIN", "MEDICAL_CENTER")
                 .requestMatchers("/api/v1/medical-centers/**")
                     .hasAnyRole("MEDICAL_CENTER", "ADMIN")
                 .requestMatchers("/api/v1/ambulanciers/**")

@@ -92,59 +92,61 @@ export default function RegulationAlertsPage() {
         ) : filtered.length === 0 ? (
           <div className="reg-empty-state">Aucune alerte ne correspond à ces critères.</div>
         ) : (
-          <table className="reg-table">
-            <thead>
-              <tr>
-                <th>Priorité</th>
-                <th>Motif</th>
-                <th>Localisation</th>
-                <th>Statut</th>
-                <th>Reçue</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((a) => (
-                <tr key={a.id}>
-                  <td><span className={`reg-priority-badge ${priorityClass(a.priority)}`}>{priorityLabel(a.priority)}</span></td>
-                  <td>{iconForCategory(a.categoryName)} {a.categoryName}</td>
-                  <td>{a.address || `${a.latitude}, ${a.longitude}`}</td>
-                  <td>{statusLabel(a.status)}</td>
-                  <td>{formatElapsed(a.createdAt)}</td>
-                  <td>
-                    {a.status === "EN_ATTENTE_VALIDATION" ? (
-                      <div style={{ display: "flex", gap: "6px" }}>
-                        <button
-                          className="reg-btn reg-btn-primary"
-                          style={{ padding: "6px 10px" }}
-                          disabled={busyId === a.id}
-                          onClick={() => handleDecision(a, "VALIDEE")}
-                        >
-                          Valider
-                        </button>
-                        <button
-                          className="reg-btn reg-btn-outline-danger"
-                          style={{ padding: "6px 10px" }}
-                          disabled={busyId === a.id}
-                          onClick={() => handleDecision(a, "REJETEE")}
-                        >
-                          Rejeter
-                        </button>
-                      </div>
-                    ) : (
-                      <Link
-                        to={`/medical-center/alerts/${a.id}`}
-                        className="reg-btn reg-btn-secondary"
-                        style={{ padding: "6px 10px", textDecoration: "none" }}
-                      >
-                        Voir
-                      </Link>
-                    )}
-                  </td>
+          <div className="reg-table-responsive">
+            <table className="reg-table">
+              <thead>
+                <tr>
+                  <th>Priorité</th>
+                  <th>Motif</th>
+                  <th>Localisation</th>
+                  <th>Statut</th>
+                  <th>Reçue</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map((a) => (
+                  <tr key={a.id}>
+                    <td><span className={`reg-priority-badge ${priorityClass(a.priority)}`}>{priorityLabel(a.priority)}</span></td>
+                    <td>{iconForCategory(a.categoryName)} {a.categoryName}</td>
+                    <td>{a.address || `${a.latitude}, ${a.longitude}`}</td>
+                    <td>{statusLabel(a.status)}</td>
+                    <td>{formatElapsed(a.createdAt)}</td>
+                    <td>
+                      {a.status === "EN_ATTENTE_VALIDATION" ? (
+                        <div style={{ display: "flex", gap: "6px" }}>
+                          <button
+                            className="reg-btn reg-btn-primary"
+                            style={{ padding: "6px 10px" }}
+                            disabled={busyId === a.id}
+                            onClick={() => handleDecision(a, "VALIDEE")}
+                          >
+                            Valider
+                          </button>
+                          <button
+                            className="reg-btn reg-btn-outline-danger"
+                            style={{ padding: "6px 10px" }}
+                            disabled={busyId === a.id}
+                            onClick={() => handleDecision(a, "REJETEE")}
+                          >
+                            Rejeter
+                          </button>
+                        </div>
+                      ) : (
+                        <Link
+                          to={`/medical-center/alerts/${a.id}`}
+                          className="reg-btn reg-btn-secondary"
+                          style={{ padding: "6px 10px", textDecoration: "none" }}
+                        >
+                          Voir
+                        </Link>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </>

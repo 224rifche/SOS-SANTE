@@ -81,18 +81,31 @@ export default function AmbulancierDashboard() {
     loadMissionData();
   }, [loadMissionData, isAdmin]);
 
+  // Abonnement temps reel actif des la connexion, independamment du fait
+  // qu'une mission soit deja chargee. Sans cette correction, un ambulancier
+  // qui n'avait aucune mission au moment du chargement de la page ne serait
+  // jamais notifie d'une nouvelle affectation - il devait recharger manuellement.
   useEffect(() => {
-    if (!connected || !activeIntervention?.id) return undefined;
+    if (!connected || isAdmin) return undefined;
 
     const unsubscribe = subscribe("/topic/interventions", (updatedIntervention) => {
-      if (updatedIntervention.id === activeIntervention.id) {
-        setActiveIntervention(updatedIntervention);
-        toast.info(`Statut mis à jour : ${updatedIntervention.currentStatus}`);
-      }
+      setActiveIntervention((current) => {
+        // Si c'est deja notre mission active, on met juste a jour son statut.
+        if (current && updatedIntervention.id === current.id) {
+          toast.info(`Statut mis à jour : ${updatedIntervention.currentStatus}`);
+          return updatedIntervention;
+        }
+        // Sinon, on ne sait pas encore si cette intervention nous concerne
+        // (ambulance recemment affectee) - on relance un chargement complet
+        // pour verifier via l'endpoint /interventions/active, qui fait
+        // l'association exacte cote serveur.
+        loadMissionData();
+        return current;
+      });
     });
 
     return unsubscribe;
-  }, [connected, subscribe, activeIntervention?.id]);
+  }, [connected, subscribe, isAdmin, loadMissionData]);
 
   const getPriorityLabel = (priority) => {
     if (priority === 1) return "Priorité critique";

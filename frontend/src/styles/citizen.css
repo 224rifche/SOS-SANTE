@@ -232,14 +232,14 @@
 }
 
 .cit-stat-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 10px;
-  font-size: 1rem;
+  margin-bottom: 14px;
+  font-size: 1.15rem;
 }
 
 .cit-stat-icon.red { background: rgba(229, 57, 53, 0.1); color: var(--cit-red); }
@@ -701,4 +701,24 @@
   .cit-grid-2 {
     grid-template-columns: repeat(4, 1fr);
   }
+}
+
+/* ============================================================
+   Micro-interactions dashboard citoyen (non couvertes par Bootstrap)
+   ============================================================ */
+.cit-card-hover {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cit-card-hover:hover {
+  transform: translateY(-3px);
+}
+
+.cit-sos-pulse {
+  animation: cit-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes cit-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.35); }
+  50% { box-shadow: 0 0 0 14px rgba(229, 57, 53, 0); }
 }

@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useWebSocket } from "../../contexts/WebSocketContext";
+import { alertService } from "../../services/alertService";
 import { Link, NavLink } from "react-router-dom";
 
 const ROLE_NAV = {
@@ -21,10 +24,6 @@ const ROLE_NAV = {
   ],
   ADMIN: [
     { to: "/admin", label: "Administration", end: true },
-    { to: "/medical-center", label: "Regulation", end: true },
-    { to: "/citizen", label: "Citoyen", end: true },
-    { to: "/ambulancier", label: "Ambulancier", end: true },
-    { to: "/doctor/dashboard", label: "Medecin", end: true },
   ],
 };
 
@@ -36,21 +35,153 @@ function getNavItems(roles) {
   return ROLE_NAV.CITIZEN;
 }
 
+export const SIDEBAR_WIDTH = 240;
+
 export default function Navbar() {
   const { user, logout, isAuthenticated } = useAuth();
-  if (!isAuthenticated) return null;
+  const { connected, subscribe } = useWebSocket();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
 
   const roles = user?.roles || [];
+  const isAdmin = roles.includes("ADMIN");
+
+  const refreshPendingCount = () => {
+    alertService.listAll("EN_ATTENTE_VALIDATION")
+      .then((list) => setPendingCount(list.length))
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    if (!isAdmin || !isAuthenticated) return undefined;
+    refreshPendingCount();
+  }, [isAdmin, isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAdmin || !connected) return undefined;
+    return subscribe("/topic/alerts", () => refreshPendingCount());
+  }, [isAdmin, connected, subscribe]);
+
+  if (!isAuthenticated) return null;
+
   const navItems = getNavItems(roles);
   const displayRole = roles[0] || "UTILISATEUR";
+  const initials = user
+    ? `${(user.firstName || "?")[0]}${(user.lastName || "?")[0]}`.toUpperCase()
+    : "??";
+  const fullName = user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : "";
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark shadow-sm py-3 mb-4" style={{ background: "#0B1524" }}>
-      <div className="container">
-        <Link className="navbar-brand d-flex align-items-center fw-bold text-white" to="/">
+    <>
+      <style>{`
+        .sidebar-nav {
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 100vh;
+          width: ${SIDEBAR_WIDTH}px;
+          background: #0B1524;
+          display: flex;
+          flex-direction: column;
+          z-index: 1030;
+          transition: transform 0.2s ease;
+          overflow-y: auto;
+        }
+        .sidebar-nav-toggle {
+          display: none;
+          position: fixed;
+          top: 0.75rem;
+          left: 0.75rem;
+          z-index: 1040;
+        }
+        .sidebar-nav-link {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.6rem 1rem;
+          border-radius: 0.5rem;
+          color: rgba(255,255,255,0.6);
+          text-decoration: none;
+          font-size: 0.9rem;
+          transition: background-color 0.15s ease, color 0.15s ease;
+        }
+        .sidebar-nav-link:hover {
+          background-color: rgba(255,255,255,0.06);
+          color: #fff;
+        }
+        .sidebar-nav-link.active {
+          background-color: rgba(220,53,69,0.25);
+          color: #fff;
+          font-weight: 600;
+        }
+        .sidebar-nav-badge {
+          background-color: #dc3545;
+          color: #fff;
+          font-size: 0.7rem;
+          font-weight: 700;
+          padding: 0.1rem 0.45rem;
+          border-radius: 999px;
+          line-height: 1.4;
+        }
+        .sidebar-nav-identity {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          padding: 0.5rem;
+          margin-bottom: 1rem;
+          border-radius: 0.5rem;
+          background-color: rgba(255,255,255,0.04);
+        }
+        .sidebar-nav-avatar {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background-color: rgba(220,53,69,0.25);
+          color: #fff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          font-size: 0.8rem;
+          flex-shrink: 0;
+        }
+        .sidebar-nav-overlay {
+          display: none;
+        }
+        @media (max-width: 991.98px) {
+          .sidebar-nav {
+            transform: translateX(${mobileOpen ? "0" : "-100%"});
+          }
+          .sidebar-nav-toggle {
+            display: inline-flex;
+          }
+          .sidebar-nav-overlay {
+            display: ${mobileOpen ? "block" : "none"};
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 1020;
+          }
+        }
+      `}</style>
+
+      <button
+        type="button"
+        className="btn btn-dark sidebar-nav-toggle"
+        onClick={() => setMobileOpen((v) => !v)}
+        aria-label="Ouvrir le menu"
+      >
+        ☰
+      </button>
+
+      <div className="sidebar-nav-overlay" onClick={() => setMobileOpen(false)} />
+
+      <nav className="sidebar-nav p-3">
+        <Link className="d-flex align-items-center fw-bold text-white text-decoration-none mb-3" to="/">
           <div
             className="d-inline-flex align-items-center justify-content-center bg-danger rounded-2 me-2 fw-bold small"
-            style={{ width: "32px", height: "32px" }}
+            style={{ width: "32px", height: "32px", flexShrink: 0 }}
           >
             NE
           </div>
@@ -58,33 +189,42 @@ export default function Navbar() {
             Wonmally <span className="text-danger">Emergency</span>
           </span>
         </Link>
-        <div className="collapse navbar-collapse show" id="navbarNav">
-          <ul className="navbar-nav me-auto gap-1 flex-wrap">
-            {navItems.map((item) => (
-              <li className="nav-item" key={item.to}>
-                <NavLink
-                  to={item.to}
-                  end={item.end}
-                  className={({ isActive }) =>
-                    `nav-link px-3 rounded-3 ${isActive ? "active bg-danger bg-opacity-25 text-white" : "text-white-50"}`
-                  }
-                >
-                  {item.label}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-          <div className="d-flex align-items-center gap-3 ms-auto">
-            <span className="text-light small d-none d-sm-inline">
-              {user?.email}{" "}
-              <span className="badge bg-secondary ms-1">{displayRole}</span>
-            </span>
-            <button className="btn btn-outline-danger btn-sm px-3" onClick={logout}>
-              Deconnexion
-            </button>
+
+        <div className="sidebar-nav-identity">
+          <div className="sidebar-nav-avatar">{initials}</div>
+          <div className="text-truncate">
+            <div className="text-white small text-truncate">{fullName || user?.email}</div>
+            <span className="badge bg-secondary" style={{ fontSize: "0.65rem" }}>{displayRole}</span>
           </div>
         </div>
-      </div>
-    </nav>
+
+        <ul className="nav flex-column gap-1 flex-grow-1">
+          {navItems.map((item) => (
+            <li className="nav-item" key={item.to}>
+              <NavLink
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) => `sidebar-nav-link ${isActive ? "active" : ""}`}
+                onClick={() => setMobileOpen(false)}
+              >
+                <span>{item.label}</span>
+                {isAdmin && pendingCount > 0 && (
+                  <span className="sidebar-nav-badge">{pendingCount}</span>
+                )}
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+
+        <div className="border-top border-secondary border-opacity-25 pt-3 mt-3">
+          <div className="text-light small mb-2">
+            <div className="text-truncate">{user?.email}</div>
+          </div>
+          <button className="btn btn-outline-danger btn-sm w-100" onClick={logout}>
+            Deconnexion
+          </button>
+        </div>
+      </nav>
+    </>
   );
 }

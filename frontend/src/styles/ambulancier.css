@@ -999,9 +999,21 @@
   display: flex;
   flex-direction: column;
   background-color: #F5F7F8;
-  max-width: 480px;
+  width: 100%;
   margin: 0 auto;
   position: relative;
+}
+
+@media (min-width: 576px) {
+  .amb-layout {
+    max-width: 600px;
+  }
+}
+
+@media (min-width: 992px) {
+  .amb-layout {
+    max-width: 1000px;
+  }
 }
 
 .amb-layout-header {

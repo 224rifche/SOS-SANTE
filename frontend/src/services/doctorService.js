@@ -11,6 +11,16 @@ export const doctorService = {
     return data;
   },
 
+  async getById(id) {
+    const { data } = await apiClient.get(`/doctors/${id}`);
+    return data;
+  },
+
+  async create(payload) {
+    const { data } = await apiClient.post("/doctors", payload);
+    return data;
+  },
+
   async updateStatus(id, status) {
     const { data } = await apiClient.patch(`/doctors/${id}/status`, { status });
     return data;
@@ -19,5 +29,9 @@ export const doctorService = {
   async updateAvailability(id, available) {
     const { data } = await apiClient.patch(`/doctors/${id}/availability`, { available });
     return data;
+  },
+
+  async remove(id) {
+    await apiClient.delete(`/doctors/${id}`);
   },
 };

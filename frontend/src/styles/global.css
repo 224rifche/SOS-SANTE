@@ -555,8 +555,7 @@ button:disabled {
    Fond ambulance + mise en page centree (une seule colonne)
    ============================================================ */
 .auth-ne-wrapper {
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
