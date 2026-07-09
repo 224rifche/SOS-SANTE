@@ -7,6 +7,7 @@ import com.wonmally.app.ambulance.repository.AmbulanceRepository;
 import com.wonmally.app.exception.BadRequestException;
 import com.wonmally.app.exception.ResourceConflictException;
 import com.wonmally.app.exception.ResourceNotFoundException;
+import com.wonmally.app.intervention.repository.InterventionRepository;
 import com.wonmally.app.medicalcenter.entity.MedicalCenter;
 import com.wonmally.app.medicalcenter.repository.MedicalCenterRepository;
 import com.wonmally.app.websocket.AlertWebSocketService;
@@ -17,6 +18,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -26,6 +28,7 @@ public class AmbulanceService {
 
     private final AmbulanceRepository ambulanceRepository;
     private final MedicalCenterRepository medicalCenterRepository;
+    private final InterventionRepository interventionRepository;
     private final AmbulanceMapper mapper;
     private final AlertWebSocketService webSocketService;
 
@@ -42,12 +45,12 @@ public class AmbulanceService {
 
         Specification<Ambulance> spec = Specification.where(byStatus).and(byMedicalCenter);
 
-        return ambulanceRepository.findAll(spec, pageable).map(mapper::toResponse);
+        return ambulanceRepository.findAll(spec, Objects.requireNonNull(pageable)).map(mapper::toResponse);
     }
 
     @Transactional(readOnly = true)
     public AmbulanceResponseDTO getAmbulanceById(UUID id) {
-        Ambulance ambulance = ambulanceRepository.findById(id)
+        Ambulance ambulance = ambulanceRepository.findById(Objects.requireNonNull(id))
             .orElseThrow(() -> new ResourceNotFoundException("Ambulance introuvable"));
         return mapper.toResponse(ambulance);
     }
@@ -58,7 +61,7 @@ public class AmbulanceService {
             throw new ResourceConflictException("Ce numero d'immatriculation est deja utilise");
         }
 
-        MedicalCenter medicalCenter = medicalCenterRepository.findById(dto.medicalCenterId())
+        MedicalCenter medicalCenter = medicalCenterRepository.findById(Objects.requireNonNull(dto.medicalCenterId()))
             .orElseThrow(() -> new ResourceNotFoundException("Centre medical introuvable"));
 
         Ambulance ambulance = Ambulance.builder()
@@ -68,21 +71,21 @@ public class AmbulanceService {
             .status("AVAILABLE")
             .build();
 
-        return mapper.toResponse(ambulanceRepository.save(ambulance));
+        return mapper.toResponse(Objects.requireNonNull(ambulanceRepository.save(ambulance)));
     }
 
     @Transactional
     public AmbulanceResponseDTO updateAmbulance(UUID id, UpdateAmbulanceRequestDTO dto) {
-        Ambulance ambulance = ambulanceRepository.findById(id)
+        Ambulance ambulance = ambulanceRepository.findById(Objects.requireNonNull(id))
             .orElseThrow(() -> new ResourceNotFoundException("Ambulance introuvable"));
 
         mapper.updateEntityFromDto(ambulance, dto);
-        return mapper.toResponse(ambulanceRepository.save(ambulance));
+        return mapper.toResponse(Objects.requireNonNull(ambulanceRepository.save(ambulance)));
     }
 
     @Transactional
     public AmbulanceResponseDTO updateStatus(UUID id, UpdateAmbulanceStatusRequestDTO dto) {
-        Ambulance ambulance = ambulanceRepository.findById(id)
+        Ambulance ambulance = ambulanceRepository.findById(Objects.requireNonNull(id))
             .orElseThrow(() -> new ResourceNotFoundException("Ambulance introuvable"));
 
         String newStatus = dto.status().toUpperCase();
@@ -91,12 +94,14 @@ public class AmbulanceService {
         }
 
         ambulance.setStatus(newStatus);
-        return mapper.toResponse(ambulanceRepository.save(ambulance));
+        AmbulanceResponseDTO response = mapper.toResponse(Objects.requireNonNull(ambulanceRepository.save(ambulance)));
+        webSocketService.broadcastAmbulanceStatus(response);
+        return response;
     }
 
     @Transactional
     public AmbulanceResponseDTO updatePosition(UUID id, UpdateAmbulancePositionRequestDTO dto) {
-        Ambulance ambulance = ambulanceRepository.findById(id)
+        Ambulance ambulance = ambulanceRepository.findById(Objects.requireNonNull(id))
             .orElseThrow(() -> new ResourceNotFoundException("Ambulance introuvable"));
 
         ambulance.setGpsLatitude(dto.gpsLatitude());
@@ -109,10 +114,24 @@ public class AmbulanceService {
         return response;
     }
 
+    /**
+     * Supprime definitivement une ambulance.
+     * Refuse la suppression si des interventions y sont deja rattachees,
+     * pour ne jamais casser l'integrite referentielle. Dans ce cas,
+     * passer le statut a OUT_OF_SERVICE doit etre utilise a la place.
+     */
     @Transactional
     public void deleteAmbulance(UUID id) {
-        Ambulance ambulance = ambulanceRepository.findById(id)
+        Ambulance ambulance = ambulanceRepository.findById(Objects.requireNonNull(id))
             .orElseThrow(() -> new ResourceNotFoundException("Ambulance introuvable"));
-        ambulanceRepository.delete(ambulance);
+
+        boolean hasInterventions = !interventionRepository.findByAmbulanceId(id).isEmpty();
+        if (hasInterventions) {
+            throw new ResourceConflictException(
+                "Impossible de supprimer cette ambulance : des interventions y sont rattachees. Utilisez le statut Hors service a la place."
+            );
+        }
+
+        ambulanceRepository.delete(Objects.requireNonNull(ambulance));
     }
 }

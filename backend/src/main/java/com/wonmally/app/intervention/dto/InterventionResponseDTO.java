@@ -19,5 +19,12 @@ public record InterventionResponseDTO(
     InterventionStatus currentStatus,
     LocalDateTime startedAt,
     LocalDateTime completedAt,
-    Boolean archived
+    Boolean archived,
+    String heartRate,
+    String bloodPressure,
+    String spo2,
+    String temperature,
+    String consciousness,
+    Boolean oxygenPlaced,
+    Boolean ecgDone
 ) {}

@@ -1,6 +1,5 @@
 package com.wonmally.app.ambulancier.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -13,7 +12,6 @@ public record CreateAmbulancierRequestDTO(
     @NotNull(message = "Le centre medical est obligatoire")
     UUID medicalCenterId,
 
-    @NotBlank(message = "Le matricule est obligatoire")
     @Size(max = 50)
     String matricule
 ) {}

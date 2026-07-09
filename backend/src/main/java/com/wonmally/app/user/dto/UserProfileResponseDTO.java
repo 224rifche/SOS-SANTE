@@ -15,6 +15,7 @@ public record UserProfileResponseDTO(
     String phone,
     String profilePicture,
     Set<String> roles,
+    Set<String> permissions,
     boolean enabled,
     boolean verified,
     LocalDateTime lastLogin,

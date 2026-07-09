@@ -56,6 +56,7 @@ services:
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USERNAME: ${SMTP_USERNAME:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@wonmally.com}
       SERVER_PORT: 8080
     volumes:
       - ./backend/src:/app/src

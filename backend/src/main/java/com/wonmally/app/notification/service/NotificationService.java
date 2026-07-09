@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -40,7 +41,7 @@ public class NotificationService {
 
     @Transactional
     public NotificationResponseDTO markAsRead(UUID notificationId, UUID requestingUserId) {
-        Notification notification = notificationRepository.findById(notificationId)
+        Notification notification = notificationRepository.findById(Objects.requireNonNull(notificationId))
             .orElseThrow(() -> new ResourceNotFoundException("Notification introuvable"));
 
         if (!notification.getUser().getId().equals(requestingUserId)) {
@@ -59,7 +60,7 @@ public class NotificationService {
     @Transactional
     public void notifyUser(UUID userId, String title, String message, String type) {
         try {
-            User user = userRepository.findById(userId).orElse(null);
+            User user = userRepository.findById(Objects.requireNonNull(userId)).orElse(null);
             if (user == null) {
                 return;
             }
@@ -72,7 +73,7 @@ public class NotificationService {
                 .isRead(false)
                 .build();
 
-            Notification saved = notificationRepository.save(notification);
+            Notification saved = Objects.requireNonNull(notificationRepository.save(notification));
             NotificationResponseDTO response = mapper.toResponse(saved);
             webSocketService.broadcastNotification(userId, response);
         } catch (Exception ignored) {

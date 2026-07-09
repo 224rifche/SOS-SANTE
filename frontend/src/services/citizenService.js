@@ -10,4 +10,14 @@ export const citizenService = {
     const { data } = await apiClient.put("/citizens/me", payload);
     return data;
   },
+
+  async list({ page = 0, size = 50 } = {}) {
+    const { data } = await apiClient.get("/citizens", { params: { page, size } });
+    return data;
+  },
+
+  async getById(id) {
+    const { data } = await apiClient.get(`/citizens/${id}`);
+    return data;
+  },
 };

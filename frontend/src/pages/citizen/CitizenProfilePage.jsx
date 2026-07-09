@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useAuth } from "../../contexts/AuthContext";
 import { citizenService } from "../../services/citizenService";
 
 const profileSchema = z.object({
@@ -16,12 +17,19 @@ const profileSchema = z.object({
 const BLOOD_GROUPS = ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"];
 
 export default function CitizenProfilePage() {
+  const { hasRole } = useAuth();
   const [loading, setLoading] = useState(true);
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(profileSchema),
   });
+  const isAdmin = hasRole("ADMIN");
 
   useEffect(() => {
+    if (isAdmin) {
+      setLoading(false);
+      return;
+    }
+
     citizenService.getMyProfile()
       .then((data) => reset({
         address: data.address || "",
@@ -31,7 +39,7 @@ export default function CitizenProfilePage() {
       }))
       .catch(() => toast.error("Impossible de charger votre profil."))
       .finally(() => setLoading(false));
-  }, [reset]);
+  }, [reset, isAdmin]);
 
   const onSubmit = async (formData) => {
     try {
@@ -49,12 +57,29 @@ export default function CitizenProfilePage() {
 
   if (loading) return <div className="text-center py-5">Chargement...</div>;
 
+  if (isAdmin) {
+    return (
+      <>
+        <h1 className="cit-page-title">Mon profil médical</h1>
+        <div className="alert alert-info mx-3 rounded-4">
+          <h5 className="alert-heading">Vue Administrateur</h5>
+          <p className="mb-0">Le profil citoyen n'est pas disponible en mode administrateur.</p>
+          <p className="mb-0 small text-muted">Utilisez la gestion des utilisateurs dans le tableau de bord admin.</p>
+          <Link to="/admin" className="btn btn-sm btn-primary mt-2 rounded-3">
+            Aller au tableau de bord Admin
+          </Link>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
+      <Link to="/citizen" className="cit-back-link">← Retour à l'accueil</Link>
       <h1 className="cit-page-title">Mon profil médical</h1>
       <p className="cit-page-sub">Ces informations sont transmises aux secours en cas d'urgence.</p>
 
-      <div className="cit-card">
+      <div className="cit-card shadow-sm">
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <label className="cit-form-label" htmlFor="address">Adresse</label>
           <input id="address" className="cit-form-input" placeholder="Quartier, rue..." {...register("address")} />

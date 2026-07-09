@@ -51,37 +51,39 @@ export default function RegulationDoctorsPage() {
         ) : doctors.length === 0 ? (
           <div className="reg-empty-state">Aucun médecin enregistré.</div>
         ) : (
-          <table className="reg-table">
-            <thead>
-              <tr>
-                <th>Nom</th>
-                <th>Spécialité</th>
-                <th>Centre médical</th>
-                <th>Statut</th>
-                <th>Changer le statut</th>
-              </tr>
-            </thead>
-            <tbody>
-              {doctors.map((doc) => (
-                <tr key={doc.id}>
-                  <td>Dr. {doc.userFirstName} {doc.userLastName}</td>
-                  <td>{doc.specialty || "—"}</td>
-                  <td>{doc.medicalCenterName || "—"}</td>
-                  <td><span className={`reg-status-tag ${STATUS_TAG_CLASS[doc.status] || "offline"}`}>{doc.status}</span></td>
-                  <td>
-                    <select
-                      className="reg-select"
-                      value={doc.status}
-                      disabled={busyId === doc.id}
-                      onChange={(e) => handleStatusChange(doc, e.target.value)}
-                    >
-                      {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </td>
+          <div className="reg-table-responsive">
+            <table className="reg-table">
+              <thead>
+                <tr>
+                  <th>Nom</th>
+                  <th>Spécialité</th>
+                  <th>Centre médical</th>
+                  <th>Statut</th>
+                  <th>Changer le statut</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {doctors.map((doc) => (
+                  <tr key={doc.id}>
+                    <td>Dr. {doc.userFirstName} {doc.userLastName}</td>
+                    <td>{doc.specialty || "—"}</td>
+                    <td>{doc.medicalCenterName || "—"}</td>
+                    <td><span className={`reg-status-tag ${STATUS_TAG_CLASS[doc.status] || "offline"}`}>{doc.status}</span></td>
+                    <td>
+                      <select
+                        className="reg-select"
+                        value={doc.status}
+                        disabled={busyId === doc.id}
+                        onChange={(e) => handleStatusChange(doc, e.target.value)}
+                      >
+                        {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </>

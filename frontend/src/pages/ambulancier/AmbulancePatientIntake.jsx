@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { interventionService } from "../../services/interventionService";
 import { toast } from "react-toastify";
@@ -9,31 +9,39 @@ export default function AmbulancePatientIntake() {
   const { id } = useParams();
   const [loading, setLoading] = useState(false);
 
-  // Valeurs des constantes initialisées conformément à l'image
-  const [heartRate, setHeartRate] = useState("112");
-  const [bloodPressure, setBloodPressure] = useState("14/9");
-  const [spo2, setSpo2] = useState("94");
-  const [temperature, setTemperature] = useState("37,2");
-
-  // État de conscience ("CONSCIENT", "SOMNOLENT", "INCONSCIENT")
+  const [heartRate, setHeartRate] = useState("");
+  const [bloodPressure, setBloodPressure] = useState("");
+  const [spo2, setSpo2] = useState("");
+  const [temperature, setTemperature] = useState("");
   const [consciousness, setConsciousness] = useState("CONSCIENT");
+  const [oxygenPlaced, setOxygenPlaced] = useState(false);
+  const [ecgDone, setEcgDone] = useState(false);
 
-  // Actes médicaux posés (Boolean)
-  const [oxygenPlaced, setOxygenPlaced] = useState(true);
-  const [ecgDone, setEcgDone] = useState(true);
-
-  // Confirmer l'intake et démarrer le transport du patient
   const handleStartTransport = async () => {
     if (!id) {
       toast.error("Identifiant de mission manquant.");
       return;
     }
+    if (!heartRate.trim() || !bloodPressure.trim() || !spo2.trim() || !temperature.trim()) {
+      toast.warning("Merci de renseigner toutes les constantes vitales avant de continuer.");
+      return;
+    }
+
     setLoading(true);
     try {
-      await interventionService.updateStatus(id, {
-        newStatus: "TRANSPORT_VERS_CENTRE",
+      await interventionService.updateVitalSigns(id, {
+        heartRate,
+        bloodPressure,
+        spo2,
+        temperature,
+        consciousness,
+        oxygenPlaced,
+        ecgDone,
       });
-      toast.success("Patient pris en charge. Transport vers l'hôpital démarré.");
+      await interventionService.updateStatus(id, {
+        newStatus: "PATIENT_PRIS_EN_CHARGE",
+      });
+      toast.success("Patient pris en charge. Constantes vitales enregistrees.");
       navigate("/ambulancier/itineraire");
     } catch (err) {
       toast.error(err.response?.data?.message || "Erreur lors de la validation de la prise en charge.");
@@ -46,7 +54,6 @@ export default function AmbulancePatientIntake() {
 
   return (
     <div className="amb-detail-view-container">
-      {/* Header */}
       <div className="amb-detail-view-header">
         <button className="amb-back-circle-btn" onClick={() => navigate(backTarget)} aria-label="Retour">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#37474F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -61,30 +68,27 @@ export default function AmbulancePatientIntake() {
         </div>
       </div>
 
-      {/* Section Constantes vitales */}
       <span className="amb-section-subtitle-gray">Constantes vitales du patient</span>
       <div className="amb-vitals-grid">
-        
-        {/* Freq. Cardiaque */}
         <div className="amb-vital-card">
           <div className="amb-vital-header-row">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="#E53935">
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
             </svg>
-            <span>Fréq. cardiaque</span>
+            <span>Freq. cardiaque</span>
           </div>
           <div className="amb-vital-value-row">
-            <input 
-              type="text" 
-              className="amb-vital-input" 
-              value={heartRate} 
+            <input
+              type="text"
+              className="amb-vital-input"
+              placeholder="ex: 78"
+              value={heartRate}
               onChange={(e) => setHeartRate(e.target.value)}
             />
             <span className="amb-vital-unit">bpm</span>
           </div>
         </div>
 
-        {/* Tension */}
         <div className="amb-vital-card">
           <div className="amb-vital-header-row">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E88E5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -93,72 +97,71 @@ export default function AmbulancePatientIntake() {
             <span>Tension</span>
           </div>
           <div className="amb-vital-value-row">
-            <input 
-              type="text" 
-              className="amb-vital-input" 
-              value={bloodPressure} 
+            <input
+              type="text"
+              className="amb-vital-input"
+              placeholder="ex: 12/8"
+              value={bloodPressure}
               onChange={(e) => setBloodPressure(e.target.value)}
             />
             <span className="amb-vital-unit">cmHg</span>
           </div>
         </div>
 
-        {/* SpO2 */}
         <div className="amb-vital-card">
           <div className="amb-vital-header-row">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="#00ACC1">
               <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
             </svg>
-            <span>SpO₂</span>
+            <span>SpO2</span>
           </div>
           <div className="amb-vital-value-row">
-            <input 
-              type="text" 
-              className="amb-vital-input" 
-              value={spo2} 
+            <input
+              type="text"
+              className="amb-vital-input"
+              placeholder="ex: 98"
+              value={spo2}
               onChange={(e) => setSpo2(e.target.value)}
             />
             <span className="amb-vital-unit">%</span>
           </div>
         </div>
 
-        {/* Température */}
         <div className="amb-vital-card">
           <div className="amb-vital-header-row">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="#FB8C00">
               <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
             </svg>
-            <span>Température</span>
+            <span>Temperature</span>
           </div>
           <div className="amb-vital-value-row">
-            <input 
-              type="text" 
-              className="amb-vital-input" 
-              value={temperature} 
+            <input
+              type="text"
+              className="amb-vital-input"
+              placeholder="ex: 36,8"
+              value={temperature}
               onChange={(e) => setTemperature(e.target.value)}
             />
-            <span className="amb-vital-unit">°C</span>
+            <span className="amb-vital-unit">C</span>
           </div>
         </div>
-
       </div>
 
-      {/* Section État de conscience */}
-      <span className="amb-section-subtitle-gray">État de conscience</span>
+      <span className="amb-section-subtitle-gray">Etat de conscience</span>
       <div className="amb-pill-selector-row">
-        <div 
+        <div
           className={`amb-pill-select-btn ${consciousness === "CONSCIENT" ? "active" : ""}`}
           onClick={() => setConsciousness("CONSCIENT")}
         >
           Conscient
         </div>
-        <div 
+        <div
           className={`amb-pill-select-btn ${consciousness === "SOMNOLENT" ? "active" : ""}`}
           onClick={() => setConsciousness("SOMNOLENT")}
         >
           Somnolent
         </div>
-        <div 
+        <div
           className={`amb-pill-select-btn ${consciousness === "INCONSCIENT" ? "active" : ""}`}
           onClick={() => setConsciousness("INCONSCIENT")}
         >
@@ -166,11 +169,8 @@ export default function AmbulancePatientIntake() {
         </div>
       </div>
 
-      {/* Capsules Actes Médicaux posés */}
       <div className="amb-procedure-row">
-        
-        {/* Oxygène posé */}
-        <div 
+        <div
           className={`amb-procedure-pill blue ${oxygenPlaced ? "active" : ""}`}
           onClick={() => setOxygenPlaced(!oxygenPlaced)}
         >
@@ -179,11 +179,9 @@ export default function AmbulancePatientIntake() {
             <line x1="12" y1="6" x2="12" y2="18" />
             <line x1="9" y1="12" x2="15" y2="12" />
           </svg>
-          <span>Oxygène posé</span>
+          <span>Oxygene pose</span>
         </div>
-
-        {/* ECG réalisé */}
-        <div 
+        <div
           className={`amb-procedure-pill green ${ecgDone ? "active" : ""}`}
           onClick={() => setEcgDone(!ecgDone)}
         >
@@ -191,26 +189,23 @@ export default function AmbulancePatientIntake() {
             <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
             <path d="M12 5l-1.5 2h3z" />
           </svg>
-          <span>ECG réalisé</span>
+          <span>ECG realise</span>
         </div>
-
       </div>
 
-      {/* Bouton d'action au bas de l'écran */}
       <div className="amb-bottom-action-container">
-        <button 
-          className="amb-action-btn-green" 
+        <button
+          className="amb-action-btn-green"
           onClick={handleStartTransport}
           disabled={loading}
         >
-          {/* Brancard / Stretcher SVG Icon */}
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="6" cy="18" r="2" />
             <circle cx="18" cy="18" r="2" />
             <path d="M3 6h18M3 10h18M6 10v6M18 10v6M10 10v6M14 10v6" />
             <path d="M5 6v4M19 6v4" />
           </svg>
-          {loading ? "Traitement..." : "Transporter le patient"}
+          {loading ? "Enregistrement..." : "Transporter le patient"}
         </button>
       </div>
     </div>

@@ -5,6 +5,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
+  withCredentials: true,
+  withXSRFToken: true,
 });
 
 // Intercepteur de requete : injection automatique du Bearer Token JWT.
@@ -12,6 +14,13 @@ apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("wonmally_access_token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  const xsrfToken = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("XSRF-TOKEN="))
+    ?.split("=")[1];
+  if (xsrfToken) {
+    config.headers["X-XSRF-TOKEN"] = xsrfToken;
   }
   return config;
 });
@@ -29,16 +38,38 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const isAuthMeRequest = originalRequest.url?.includes("/auth/me");
+
+    if (isAuthMeRequest) {
+      return Promise.reject(error);
+    }
+
+    if (error.response?.status === 403) {
+      // Un 403 peut signifier soit un jeton CSRF perime (on tente un seul retry),
+      // soit un manque de droits legitime sur un endpoint precis. Dans ce second
+      // cas, il ne faut JAMAIS deconnecter l'utilisateur : on laisse simplement
+      // l'erreur remonter pour que l'appelant l'affiche normalement.
+      if (!originalRequest._csrfRetry) {
+        originalRequest._csrfRetry = true;
+        const freshXsrfToken = document.cookie
+          .split("; ")
+          .find((row) => row.startsWith("XSRF-TOKEN="))
+          ?.split("=")[1];
+        if (freshXsrfToken) {
+          originalRequest.headers["X-XSRF-TOKEN"] = freshXsrfToken;
+          return apiClient(originalRequest);
+        }
+      }
+      return Promise.reject(error);
+    }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-
       const refreshToken = localStorage.getItem("wonmally_refresh_token");
       if (!refreshToken) {
         clearSessionAndRedirect();
         return Promise.reject(error);
       }
-
       if (!isRefreshing) {
         isRefreshing = true;
         try {
@@ -53,7 +84,6 @@ apiClient.interceptors.response.use(
           return Promise.reject(refreshError);
         }
       }
-
       return new Promise((resolve) => {
         refreshSubscribers.push((newToken) => {
           originalRequest.headers.Authorization = `Bearer ${newToken}`;

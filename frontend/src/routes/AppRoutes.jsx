@@ -1,16 +1,18 @@
-import { Routes, Route, Outlet } from "react-router-dom";
+import { Routes, Route, Outlet, Navigate } from "react-router-dom";
 import DoctorDashboard from "../pages/doctor/doctordashboard";
 import DoctorInterventionPage from "../pages/doctor/DoctorInterventionPage";
 import DoctorLayout from "../pages/doctor/DoctorLayout";
 import ProtectedRoute from "./ProtectedRoute";
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
+import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
+import VerifyEmailPage from "../pages/auth/VerifyEmailPage";
 import SOSPage from "../pages/citizen/SOSPage";
 import CitizenDashboard from "../pages/citizen/CitizenDashboard";
 import CitizenLayout from "../pages/citizen/CitizenLayout";
 import TrackingPage from "../pages/citizen/TrackingPage";
 import AlertConfirmationPage from "../pages/citizen/AlertConfirmationPage";
-import AdminDashboard from "../pages/admin/AdminDashboard";
 import CitizenProfilePage from "../pages/citizen/CitizenProfilePage";
 import CitizenHistoryPage from "../pages/citizen/CitizenHistoryPage";
 import AmbulancierDashboard from "../pages/ambulancier/AmbulancierDashboard";
@@ -18,12 +20,7 @@ import AmbulanceItinerary from "../pages/ambulancier/AmbulanceItinerary";
 import AmbulanceMissionDetail from "../pages/ambulancier/AmbulanceMissionDetail";
 import AmbulancePatientIntake from "../pages/ambulancier/AmbulancePatientIntake";
 import AmbulancierLayout from "../pages/ambulancier/AmbulancierLayout";
-import Screen1_Dashboard from "../pages/admin/Screen1_Dashboard";
-import Screen2_Utilisateurs from "../pages/admin/Screen2_Utilisateurs";
-import Screen3_Statistiques from "../pages/admin/Screen3_Statistiques";
-import Screen4_JournalAudit from "../pages/admin/Screen4_JournalAudit";
 import HomeRedirect from "./HomeRedirect";
-import Navbar from "../components/layout/Navbar";
 import AlertDetailPage from "../pages/medical-center/AlertDetailPage";
 import AmbulanceAssignmentPage from "../pages/medical-center/AmbulanceAssignmentPage";
 import InterventionTrackingPage from "../pages/medical-center/InterventionTrackingPage";
@@ -36,16 +33,15 @@ import RegulationDoctorsPage from "../pages/medical-center/RegulationDoctorsPage
 import RegulationHistoryPage from "../pages/medical-center/RegulationHistoryPage";
 import RegulationStatsPage from "../pages/medical-center/RegulationStatsPage";
 
-function AppLayout() {
-  return (
-    <>
-      <Navbar />
-      <div className="container-fluid px-0">
-        <Outlet />
-      </div>
-    </>
-  );
-}
+import AdminLayout from "../pages/admin/AdminLayout";
+import AdminOverviewPage from "../pages/admin/AdminOverviewPage";
+import AdminRegulationPage from "../pages/admin/AdminRegulationPage";
+import AdminDoctorsPage from "../pages/admin/AdminDoctorsPage";
+import AdminAmbulancesPage from "../pages/admin/AdminAmbulancesPage";
+import AdminAmbulanciersPage from "../pages/admin/AdminAmbulanciersPage";
+import AdminCitizensPage from "../pages/admin/AdminCitizensPage";
+import AdminUsersPage from "../pages/admin/AdminUsersPage";
+import AdminAuditPage from "../pages/admin/AdminAuditPage";
 
 export default function AppRoutes() {
   return (
@@ -53,6 +49,9 @@ export default function AppRoutes() {
       <Route path="/" element={<HomeRedirect />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<ProtectedRoute allowedRoles={["CITIZEN", "ADMIN"]} />}>
@@ -85,28 +84,32 @@ export default function AppRoutes() {
           </Route>
         </Route>
 
-        <Route element={<AppLayout />}>
-          <Route element={<ProtectedRoute allowedRoles={["MEDICAL_CENTER", "ADMIN"]} />}>
-            <Route element={<RegulationLayout />}>
-              <Route path="/medical-center" element={<RegulationDashboardPage />} />
-              <Route path="/medical-center/alerts" element={<RegulationAlertsPage />} />
-              <Route path="/medical-center/map" element={<RegulationMapPage />} />
-              <Route path="/medical-center/ambulances" element={<RegulationAmbulancesPage />} />
-              <Route path="/medical-center/doctors" element={<RegulationDoctorsPage />} />
-              <Route path="/medical-center/history" element={<RegulationHistoryPage />} />
-              <Route path="/medical-center/stats" element={<RegulationStatsPage />} />
-            </Route>
-            <Route path="/medical-center/alerts/:alertId" element={<AlertDetailPage />} />
-            <Route path="/medical-center/alerts/:alertId/assign" element={<AmbulanceAssignmentPage />} />
-            <Route path="/medical-center/alerts/:alertId/tracking" element={<InterventionTrackingPage />} />
+        <Route element={<ProtectedRoute allowedRoles={["MEDICAL_CENTER", "ADMIN"]} />}>
+          <Route element={<RegulationLayout />}>
+            <Route path="/medical-center" element={<RegulationDashboardPage />} />
+            <Route path="/medical-center/alerts" element={<RegulationAlertsPage />} />
+            <Route path="/medical-center/map" element={<RegulationMapPage />} />
+            <Route path="/medical-center/ambulances" element={<RegulationAmbulancesPage />} />
+            <Route path="/medical-center/doctors" element={<RegulationDoctorsPage />} />
+            <Route path="/medical-center/history" element={<RegulationHistoryPage />} />
+            <Route path="/medical-center/stats" element={<RegulationStatsPage />} />
           </Route>
+          <Route path="/medical-center/alerts/:alertId" element={<AlertDetailPage />} />
+          <Route path="/medical-center/alerts/:alertId/assign" element={<AmbulanceAssignmentPage />} />
+          <Route path="/medical-center/alerts/:alertId/tracking" element={<InterventionTrackingPage />} />
+        </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/dashboard" element={<Screen1_Dashboard />} />
-            <Route path="/admin/users" element={<Screen2_Utilisateurs />} />
-            <Route path="/admin/statistics" element={<Screen3_Statistiques />} />
-            <Route path="/admin/audit" element={<Screen4_JournalAudit />} />
+        <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="/admin/overview" replace />} />
+            <Route path="overview" element={<AdminOverviewPage />} />
+            <Route path="regulation" element={<AdminRegulationPage />} />
+            <Route path="doctors" element={<AdminDoctorsPage />} />
+            <Route path="ambulances" element={<AdminAmbulancesPage />} />
+            <Route path="ambulanciers" element={<AdminAmbulanciersPage />} />
+            <Route path="citizens" element={<AdminCitizensPage />} />
+            <Route path="users" element={<AdminUsersPage />} />
+            <Route path="audit" element={<AdminAuditPage />} />
           </Route>
         </Route>
       </Route>

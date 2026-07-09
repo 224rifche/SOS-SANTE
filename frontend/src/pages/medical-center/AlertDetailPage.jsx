@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import "../../styles/regulation.css";
 import { alertService } from "../../services/alertService";
 import { ambulanceService } from "../../services/ambulanceService";
 import { interventionService } from "../../services/interventionService";
+import { doctorService } from "../../services/doctorService";
 import { useWebSocket } from "../../contexts/WebSocketContext";
 import RegulationMap from "./RegulationMap";
 import { validateAndAssignAmbulance } from "./alertWorkflow";
@@ -59,22 +61,27 @@ export default function AlertDetailPage() {
   const [alert, setAlert] = useState(null);
   const [intervention, setIntervention] = useState(null);
   const [ambulances, setAmbulances] = useState([]);
+  const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dispatchStatus, setDispatchStatus] = useState("idle");
   const [assignedAmbulance, setAssignedAmbulance] = useState("");
+  const [selectedDoctorId, setSelectedDoctorId] = useState("");
+  const [assigningDoctor, setAssigningDoctor] = useState(false);
   const [time, setTime] = useState(formatClock());
 
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [alertData, ambulancesRes] = await Promise.all([
+      const [alertData, ambulancesRes, doctorsRes] = await Promise.all([
         alertService.getAlertById(alertId),
         ambulanceService.list({ size: 100 }),
+        doctorService.list({ size: 100 }),
       ]);
       setAlert(alertData);
       setAmbulances(ambulancesRes.content || []);
+      setDoctors(doctorsRes.content || []);
 
       try {
         const interventionData = await interventionService.getByAlertId(alertId);
@@ -104,6 +111,7 @@ export default function AlertDetailPage() {
   }, [connected, subscribe, loadData]);
 
   const availableAmbulances = ambulances.filter((a) => isAmbulanceAssignable(a.status));
+  const availableDoctors = doctors.filter((d) => d.available);
   const assignedAmb = intervention?.ambulanceId
     ? ambulances.find((a) => a.id === intervention.ambulanceId)
     : null;
@@ -135,6 +143,25 @@ export default function AlertDetailPage() {
     }
   };
 
+  const handleAssignDoctor = async () => {
+    if (!intervention || !selectedDoctorId) return;
+    setAssigningDoctor(true);
+    try {
+      const updated = await interventionService.updateStatus(intervention.id, {
+        newStatus: "MEDECIN_ASSIGNE",
+        doctorId: selectedDoctorId,
+      });
+      setIntervention(updated);
+      const doc = doctors.find((d) => d.id === selectedDoctorId);
+      toast.success(`Dr. ${doc?.userFirstName} ${doc?.userLastName} assigné à l'intervention.`);
+      setSelectedDoctorId("");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Échec de l'affectation du médecin.");
+    } finally {
+      setAssigningDoctor(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="alert-detail-app-wrapper d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
@@ -158,6 +185,8 @@ export default function AlertDetailPage() {
 
   const alertCode = formatAlertCode(alert.id);
   const alreadyAssigned = Boolean(intervention?.ambulanceRegistrationNumber);
+  const readyForDoctor = intervention?.currentStatus === "ARRIVEE_AUX_URGENCES";
+  const doctorAlreadyAssigned = Boolean(intervention?.doctorName);
 
   return (
     <div className="alert-detail-app-wrapper">
@@ -301,6 +330,56 @@ export default function AlertDetailPage() {
               </div>
             )}
           </div>
+
+          {readyForDoctor && (
+            <div className="assignment-panel-card mt-3">
+              <h3 className="assignment-panel-title">
+                {doctorAlreadyAssigned ? "Médecin assigné" : "Assigner un médecin"}
+              </h3>
+
+              {doctorAlreadyAssigned ? (
+                <div className="amb-assignment-item" style={{ cursor: "default" }}>
+                  <div className="amb-item-left">
+                    <div className="amb-avatar-box">🩺</div>
+                    <div className="amb-info-text">
+                      <span className="amb-name-label">{intervention.doctorName}</span>
+                      <span className="amb-distance-label">Prise en charge médicale</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {availableDoctors.length === 0 ? (
+                    <p className="text-secondary small px-2">Aucun médecin disponible pour le moment.</p>
+                  ) : (
+                    <>
+                      <select
+                        className="form-select form-select-sm mb-2"
+                        value={selectedDoctorId}
+                        onChange={(e) => setSelectedDoctorId(e.target.value)}
+                        disabled={assigningDoctor}
+                      >
+                        <option value="">Choisir un médecin...</option>
+                        {availableDoctors.map((doc) => (
+                          <option key={doc.id} value={doc.id}>
+                            Dr. {doc.userFirstName} {doc.userLastName} — {doc.specialty || "généraliste"}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        className="amb-deploy-action-btn w-100"
+                        disabled={!selectedDoctorId || assigningDoctor}
+                        onClick={handleAssignDoctor}
+                      >
+                        {assigningDoctor ? "Affectation..." : "Assigner ce médecin"}
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

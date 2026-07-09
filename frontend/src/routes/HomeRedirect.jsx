@@ -8,7 +8,11 @@ import WelcomePage from "../pages/welcome/WelcomePage";
  * vers son dashboard dedie selon son role.
  */
 export default function HomeRedirect() {
-  const { isAuthenticated, hasRole } = useAuth();
+  const { isAuthenticated, hasRole, authChecked } = useAuth();
+
+  if (!authChecked) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return <WelcomePage />;

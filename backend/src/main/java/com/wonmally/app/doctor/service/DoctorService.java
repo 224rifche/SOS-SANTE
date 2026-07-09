@@ -7,6 +7,8 @@ import com.wonmally.app.doctor.repository.DoctorRepository;
 import com.wonmally.app.exception.BadRequestException;
 import com.wonmally.app.exception.ResourceConflictException;
 import com.wonmally.app.exception.ResourceNotFoundException;
+import com.wonmally.app.intervention.repository.InterventionRepository;
+import com.wonmally.app.intervention.repository.MedicalNoteRepository;
 import com.wonmally.app.medicalcenter.entity.MedicalCenter;
 import com.wonmally.app.medicalcenter.repository.MedicalCenterRepository;
 import com.wonmally.app.user.entity.User;
@@ -17,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -27,6 +30,8 @@ public class DoctorService {
     private final DoctorRepository doctorRepository;
     private final MedicalCenterRepository medicalCenterRepository;
     private final UserRepository userRepository;
+    private final InterventionRepository interventionRepository;
+    private final MedicalNoteRepository medicalNoteRepository;
     private final DoctorMapper mapper;
 
     private static final Set<String> VALID_STATUSES = Set.of(
@@ -35,12 +40,12 @@ public class DoctorService {
 
     @Transactional(readOnly = true)
     public Page<DoctorResponseDTO> listDoctors(Pageable pageable) {
-        return doctorRepository.findAll(pageable).map(mapper::toResponse);
+        return doctorRepository.findAll(Objects.requireNonNull(pageable)).map(mapper::toResponse);
     }
 
     @Transactional(readOnly = true)
     public DoctorResponseDTO getDoctorById(UUID id) {
-        Doctor doctor = doctorRepository.findById(id)
+        Doctor doctor = doctorRepository.findById(Objects.requireNonNull(id))
             .orElseThrow(() -> new ResourceNotFoundException("Medecin introuvable"));
         return mapper.toResponse(doctor);
     }
@@ -62,10 +67,10 @@ public class DoctorService {
             throw new ResourceConflictException("Ce numero de licence est deja utilise");
         }
 
-        User user = userRepository.findById(dto.userId())
+        User user = userRepository.findById(Objects.requireNonNull(dto.userId()))
             .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
 
-        MedicalCenter medicalCenter = medicalCenterRepository.findById(dto.medicalCenterId())
+        MedicalCenter medicalCenter = medicalCenterRepository.findById(Objects.requireNonNull(dto.medicalCenterId()))
             .orElseThrow(() -> new ResourceNotFoundException("Centre medical introuvable"));
 
         Doctor doctor = Doctor.builder()
@@ -77,12 +82,12 @@ public class DoctorService {
             .status("OFF_DUTY")
             .build();
 
-        return mapper.toResponse(doctorRepository.save(doctor));
+        return mapper.toResponse(Objects.requireNonNull(doctorRepository.save(doctor)));
     }
 
     @Transactional
     public DoctorResponseDTO updateStatus(UUID id, UpdateDoctorStatusRequestDTO dto) {
-        Doctor doctor = doctorRepository.findById(id)
+        Doctor doctor = doctorRepository.findById(Objects.requireNonNull(id))
             .orElseThrow(() -> new ResourceNotFoundException("Medecin introuvable"));
 
         String newStatus = dto.status().toUpperCase();
@@ -96,10 +101,38 @@ public class DoctorService {
 
     @Transactional
     public DoctorResponseDTO updateAvailability(UUID id, UpdateDoctorAvailabilityRequestDTO dto) {
-        Doctor doctor = doctorRepository.findById(id)
+        Doctor doctor = doctorRepository.findById(Objects.requireNonNull(id))
             .orElseThrow(() -> new ResourceNotFoundException("Medecin introuvable"));
 
         doctor.setAvailable(dto.available());
         return mapper.toResponse(doctorRepository.save(doctor));
+    }
+
+    /**
+     * Supprime definitivement un profil medecin.
+     * Refuse la suppression si des interventions ou des notes medicales
+     * y sont rattachees, pour ne jamais casser l'integrite referentielle.
+     * Dans ce cas, la desactivation (status/available) doit etre utilisee.
+     */
+    @Transactional
+    public void deleteDoctor(UUID id) {
+        Doctor doctor = doctorRepository.findById(Objects.requireNonNull(id))
+            .orElseThrow(() -> new ResourceNotFoundException("Medecin introuvable"));
+
+        boolean hasInterventions = !interventionRepository.findByDoctorId(id).isEmpty();
+        if (hasInterventions) {
+            throw new ResourceConflictException(
+                "Impossible de supprimer ce medecin : il a des interventions rattachees. Utilisez la desactivation a la place."
+            );
+        }
+
+        boolean hasMedicalNotes = !medicalNoteRepository.findByDoctorId(id).isEmpty();
+        if (hasMedicalNotes) {
+            throw new ResourceConflictException(
+                "Impossible de supprimer ce medecin : des notes medicales lui sont rattachees. Utilisez la desactivation a la place."
+            );
+        }
+
+        doctorRepository.delete(Objects.requireNonNull(doctor));
     }
 }

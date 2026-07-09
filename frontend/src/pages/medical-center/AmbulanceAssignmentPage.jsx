@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import "../../styles/regulation.css";
+import { useWebSocket } from "../../contexts/WebSocketContext";
 import { alertService } from "../../services/alertService";
 import { ambulanceService } from "../../services/ambulanceService";
 import { interventionService } from "../../services/interventionService";
@@ -48,6 +50,7 @@ const ArrowRightIcon = () => (
 export default function AmbulanceAssignmentPage() {
   const { alertId } = useParams();
   const navigate = useNavigate();
+  const { connected, subscribe } = useWebSocket();
 
   const [alert, setAlert] = useState(null);
   const [intervention, setIntervention] = useState(null);
@@ -90,13 +93,35 @@ export default function AmbulanceAssignmentPage() {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    if (!connected) return undefined;
+    return subscribe("/topic/ambulances", (updatedAmbulance) => {
+      setAmbulances((prev) => {
+        const exists = prev.some((a) => a.id === updatedAmbulance.id);
+        if (!exists) return [...prev, updatedAmbulance];
+        return prev.map((a) => (a.id === updatedAmbulance.id ? updatedAmbulance : a));
+      });
+    });
+  }, [connected, subscribe]);
+
   const sortedAmbulances = [...ambulances].sort((a, b) => {
     if (isAmbulanceAssignable(a.status) && !isAmbulanceAssignable(b.status)) return -1;
     if (!isAmbulanceAssignable(a.status) && isAmbulanceAssignable(b.status)) return 1;
     return (a.registrationNumber || "").localeCompare(b.registrationNumber || "");
   });
 
+  const availableCount = ambulances.filter((a) => isAmbulanceAssignable(a.status)).length;
   const selectedAmbulance = ambulances.find((a) => a.id === selectedAmbId);
+
+  useEffect(() => {
+    if (selectedAmbulance && !isAmbulanceAssignable(selectedAmbulance.status)) {
+      const nextAvailable = ambulances.find((a) => isAmbulanceAssignable(a.status));
+      setSelectedAmbId(nextAvailable?.id || "");
+    } else if (!selectedAmbulance && ambulances.length > 0) {
+      const nextAvailable = ambulances.find((a) => isAmbulanceAssignable(a.status));
+      if (nextAvailable) setSelectedAmbId(nextAvailable.id);
+    }
+  }, [ambulances, selectedAmbulance]);
 
   const handleConfirmAssignment = async () => {
     if (!selectedAmbulance || !isAmbulanceAssignable(selectedAmbulance.status) || !alert || !intervention) return;
@@ -140,6 +165,45 @@ export default function AmbulanceAssignmentPage() {
 
   return (
     <div className="ambulance-assignment-wrapper">
+      <style>{`
+        @keyframes ambPulseDot {
+          0% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.4); opacity: 0.5; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        .amb-waiting-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          padding: 2.5rem 1.5rem;
+          background: #fff;
+          border-radius: 14px;
+          border: 1px dashed #dee2e6;
+        }
+        .amb-waiting-dot {
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: #dc3545;
+          margin-bottom: 1rem;
+          animation: ambPulseDot 1.4s ease-in-out infinite;
+        }
+        .amb-live-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          padding: 3px 10px;
+          border-radius: 999px;
+        }
+        .amb-live-pill.on { background: rgba(16,185,129,0.12); color: #10B981; }
+        .amb-live-pill.off { background: rgba(220,53,69,0.1); color: #dc3545; }
+        .amb-live-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+      `}</style>
+
       <div className="assignment-page-header">
         <div className="header-left-group">
           <button type="button" className="back-circle-btn" onClick={() => navigate(`/medical-center/alerts/${alertId}`)} aria-label="Retour">
@@ -150,58 +214,80 @@ export default function AmbulanceAssignmentPage() {
             <span className="alert-meta-tag">Alerte {alertCode}</span>
           </div>
         </div>
-        <div className="header-right-group">
+        <div className="header-right-group d-flex align-items-center gap-2">
+          <span className={`amb-live-pill ${connected ? "on" : "off"}`}>
+            <span className="dot" />
+            {connected ? "Temps réel actif" : "Hors ligne"}
+          </span>
           <span className="clock-pill">{time}</span>
         </div>
       </div>
 
       <div className="assignment-page-content-grid">
         <div className="assignment-left-column">
-          <span className="assignment-section-subtitle">Ambulances disponibles</span>
+          <span className="assignment-section-subtitle">
+            Ambulances disponibles {availableCount > 0 ? `(${availableCount})` : ""}
+          </span>
 
-          <div className="ambulance-cards-list">
-            {sortedAmbulances.map((amb) => {
-              const isSelected = amb.id === selectedAmbId;
-              const isBusy = !isAmbulanceAssignable(amb.status);
+          {sortedAmbulances.length === 0 ? (
+            <div className="amb-waiting-state">
+              <div className="amb-waiting-dot" />
+              <h4 className="mb-1">Aucune ambulance dans le système</h4>
+              <p className="text-secondary small mb-0">Vérifiez la flotte du centre médical.</p>
+            </div>
+          ) : availableCount === 0 ? (
+            <div className="amb-waiting-state">
+              <div className="amb-waiting-dot" />
+              <h4 className="mb-1">En attente d'une ambulance disponible</h4>
+              <p className="text-secondary small mb-0">
+                Toutes les ambulances sont actuellement en mission. Cette page se mettra à jour automatiquement dès qu'une ambulance se libère.
+              </p>
+            </div>
+          ) : (
+            <div className="ambulance-cards-list">
+              {sortedAmbulances.map((amb) => {
+                const isSelected = amb.id === selectedAmbId;
+                const isBusy = !isAmbulanceAssignable(amb.status);
 
-              return (
-                <div
-                  key={amb.id}
-                  className={`ambulance-selection-card ${isSelected ? "selected" : ""} ${isBusy ? "busy" : ""}`}
-                  onClick={() => !isBusy && setSelectedAmbId(amb.id)}
-                >
-                  <div className="card-top-row">
-                    <div className="amb-icon-wrapper">
-                      <AmbulanceIcon selected={isSelected} />
+                return (
+                  <div
+                    key={amb.id}
+                    className={`ambulance-selection-card ${isSelected ? "selected" : ""} ${isBusy ? "busy" : ""}`}
+                    onClick={() => !isBusy && setSelectedAmbId(amb.id)}
+                  >
+                    <div className="card-top-row">
+                      <div className="amb-icon-wrapper">
+                        <AmbulanceIcon selected={isSelected} />
+                      </div>
+                      <div className="amb-info-wrapper">
+                        <h2 className="amb-name-title">{amb.registrationNumber}</h2>
+                        <span className={`amb-status-meta ${isBusy ? "busy-text" : ""}`}>
+                          {ambulanceStatusLabel(amb.status)}
+                          {amb.medicalCenterName ? ` — ${amb.medicalCenterName}` : ""}
+                        </span>
+                      </div>
+                      {isSelected && (
+                        <div className="checkmark-box"><CheckCircleIcon /></div>
+                      )}
                     </div>
-                    <div className="amb-info-wrapper">
-                      <h2 className="amb-name-title">{amb.registrationNumber}</h2>
-                      <span className={`amb-status-meta ${isBusy ? "busy-text" : ""}`}>
-                        {ambulanceStatusLabel(amb.status)}
-                        {amb.medicalCenterName ? ` — ${amb.medicalCenterName}` : ""}
-                      </span>
-                    </div>
+
                     {isSelected && (
-                      <div className="checkmark-box"><CheckCircleIcon /></div>
+                      <div className="card-bottom-metrics-row">
+                        <div className="metric-box">
+                          <span className="metric-val-bold">{amb.model || "—"}</span>
+                          <span className="metric-lbl-txt">Modèle</span>
+                        </div>
+                        <div className="metric-box">
+                          <span className="metric-val-bold green-txt">{ambulanceStatusLabel(amb.status)}</span>
+                          <span className="metric-lbl-txt">Statut</span>
+                        </div>
+                      </div>
                     )}
                   </div>
-
-                  {isSelected && (
-                    <div className="card-bottom-metrics-row">
-                      <div className="metric-box">
-                        <span className="metric-val-bold">{amb.model || "—"}</span>
-                        <span className="metric-lbl-txt">Modèle</span>
-                      </div>
-                      <div className="metric-box">
-                        <span className="metric-val-bold green-txt">{ambulanceStatusLabel(amb.status)}</span>
-                        <span className="metric-lbl-txt">Statut</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
 
           <div className="mobile-action-button-container">
             <button
@@ -245,6 +331,16 @@ export default function AmbulanceAssignmentPage() {
                   <span>Assigner {selectedAmbulance.registrationNumber}</span>
                   <ArrowRightIcon />
                 </button>
+              </div>
+            )}
+
+            {dispatchStatus === "idle" && !selectedAmbulance && (
+              <div className="route-panel-body">
+                <div className="amb-waiting-state" style={{ minHeight: "320px" }}>
+                  <div className="amb-waiting-dot" />
+                  <h4 className="mb-1">Aucune ambulance sélectionnée</h4>
+                  <p className="text-secondary small mb-0">La carte s'affichera dès qu'une ambulance sera disponible et sélectionnée.</p>
+                </div>
               </div>
             )}
 

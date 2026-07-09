@@ -14,6 +14,7 @@ import java.util.UUID;
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class AlertResponse {
     private UUID id;
+    private UUID citizenId;
     private String categoryName;
     private Integer priority;
     private InterventionStatus status;

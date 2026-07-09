@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useWebSocket } from "../../contexts/WebSocketContext";
 import { interventionService } from "../../services/interventionService";
@@ -19,8 +19,9 @@ const STEPS = [
 
 export default function AmbulancierDashboard() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const { subscribe, connected } = useWebSocket();
+  const isAdmin = hasRole("ADMIN");
 
   const [profile, setProfile] = useState(null);
   const [available, setAvailable] = useState(true);
@@ -33,6 +34,11 @@ export default function AmbulancierDashboard() {
   const [togglingAvailability, setTogglingAvailability] = useState(false);
 
   const loadMissionData = useCallback(async () => {
+    if (isAdmin) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setFetchError(null);
     try {
@@ -58,9 +64,14 @@ export default function AmbulancierDashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
+    if (isAdmin) {
+      setLoading(false);
+      return;
+    }
+
     ambulancierService.getMyProfile()
       .then((data) => {
         setProfile(data);
@@ -68,20 +79,33 @@ export default function AmbulancierDashboard() {
       })
       .catch(() => {});
     loadMissionData();
-  }, [loadMissionData]);
+  }, [loadMissionData, isAdmin]);
 
+  // Abonnement temps reel actif des la connexion, independamment du fait
+  // qu'une mission soit deja chargee. Sans cette correction, un ambulancier
+  // qui n'avait aucune mission au moment du chargement de la page ne serait
+  // jamais notifie d'une nouvelle affectation - il devait recharger manuellement.
   useEffect(() => {
-    if (!connected || !activeIntervention?.id) return undefined;
+    if (!connected || isAdmin) return undefined;
 
     const unsubscribe = subscribe("/topic/interventions", (updatedIntervention) => {
-      if (updatedIntervention.id === activeIntervention.id) {
-        setActiveIntervention(updatedIntervention);
-        toast.info(`Statut mis à jour : ${updatedIntervention.currentStatus}`);
-      }
+      setActiveIntervention((current) => {
+        // Si c'est deja notre mission active, on met juste a jour son statut.
+        if (current && updatedIntervention.id === current.id) {
+          toast.info(`Statut mis à jour : ${updatedIntervention.currentStatus}`);
+          return updatedIntervention;
+        }
+        // Sinon, on ne sait pas encore si cette intervention nous concerne
+        // (ambulance recemment affectee) - on relance un chargement complet
+        // pour verifier via l'endpoint /interventions/active, qui fait
+        // l'association exacte cote serveur.
+        loadMissionData();
+        return current;
+      });
     });
 
     return unsubscribe;
-  }, [connected, subscribe, activeIntervention?.id]);
+  }, [connected, subscribe, isAdmin, loadMissionData]);
 
   const getPriorityLabel = (priority) => {
     if (priority === 1) return "Priorité critique";
@@ -148,6 +172,25 @@ export default function AmbulancierDashboard() {
     ? STEPS.findIndex((s) => s.status === activeIntervention.currentStatus)
     : -1;
 
+  if (loading) {
+    return <div style={{ textAlign: "center", padding: "40px 0" }}>Chargement de l'intervention...</div>;
+  }
+
+  if (isAdmin) {
+    return (
+      <div className="ambulancier-container">
+        <div className="alert alert-info mx-3 mt-3">
+          <h5 className="alert-heading">Vue Administrateur</h5>
+          <p className="mb-0">Le dashboard ambulancier n'est pas disponible en mode administrateur.</p>
+          <p className="mb-0 small text-muted">Utilisez le Centre Médical pour gérer les interventions et ambulances.</p>
+          <Link to="/medical-center" className="btn btn-sm btn-primary mt-2">
+            Aller au Centre Médical
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="ambulancier-container">
       <header className="amb-header">
@@ -184,9 +227,7 @@ export default function AmbulancierDashboard() {
           <span style={{ color: "#E53935", marginRight: "4px" }}>●</span> MISSION ACTIVE
         </h2>
 
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "40px 0" }}>Chargement de l'intervention...</div>
-        ) : fetchError ? (
+        {fetchError ? (
           <div className="amb-card" style={{ padding: "30px", textAlign: "center", color: "#c62828" }}>
             <p className="mb-3">{fetchError}</p>
             <button type="button" className="btn btn-outline-danger btn-sm" onClick={loadMissionData}>

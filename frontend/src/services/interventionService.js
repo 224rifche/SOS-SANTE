@@ -17,6 +17,14 @@ export const interventionService = {
     const { data } = await apiClient.patch(`/interventions/${interventionId}/status`, payload);
     return data;
   },
+  async updateVitalSigns(id, payload) {
+    const { data } = await apiClient.patch(`/interventions/${id}/vitals`, payload);
+    return data;
+  },
+  async listMine() {
+    const { data } = await apiClient.get("/interventions/me");
+    return data;
+  },
   async list({ page = 0, size = 50 } = {}) {
     const { data } = await apiClient.get("/interventions", { params: { page, size } });
     return data;

@@ -19,7 +19,7 @@ const STATUS_ORDER = [
 
 export default function TrackingPage() {
   const { alertId } = useParams();
-  const { subscribe } = useWebSocket();
+  const { subscribe, connected } = useWebSocket();
   const [alert, setAlert] = useState(null);
   const [intervention, setIntervention] = useState(null);
   const [error, setError] = useState(null);
@@ -49,9 +49,9 @@ export default function TrackingPage() {
   }, [alertId]);
 
   useEffect(() => {
-    if (!intervention?.id) return undefined;
+    if (!connected || !intervention?.id) return undefined;
     return subscribe(`/topic/interventions/${intervention.id}`, setIntervention);
-  }, [intervention?.id, subscribe]);
+  }, [connected, intervention?.id, subscribe]);
 
   if (loading) return <div className="text-center py-5">Chargement du suivi...</div>;
   if (error) return <div className="alert alert-danger">{error}</div>;

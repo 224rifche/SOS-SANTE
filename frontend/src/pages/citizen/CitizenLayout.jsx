@@ -1,4 +1,7 @@
+import { useEffect } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { alertService } from "../../services/alertService";
+import { toast } from "react-toastify";
 import { useAuth } from "../../contexts/AuthContext";
 import logo from "../../assets/logo-wonmally.png";
 import "../../styles/citizen.css";
@@ -11,6 +14,20 @@ const NAV = [
 
 export default function CitizenLayout() {
   const { user, logout, hasRole } = useAuth();
+
+  useEffect(() => {
+    const trySync = async () => {
+      const count = alertService.getPendingAlertsCount();
+      if (count === 0) return;
+      const result = await alertService.flushPendingAlerts();
+      if (result.sent > 0) {
+        toast.success(`${result.sent} alerte(s) en attente envoyee(s) avec succes.`);
+      }
+    };
+    trySync();
+    window.addEventListener("online", trySync);
+    return () => window.removeEventListener("online", trySync);
+  }, []);
   const location = useLocation();
   const isSosFlow = location.pathname.includes("/alert")
     || location.pathname.includes("/tracking/");

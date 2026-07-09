@@ -129,6 +129,23 @@ public class InterventionService {
         }
     }
 
+    @Transactional
+    public InterventionResponseDTO updateVitalSigns(UUID id, com.wonmally.app.intervention.dto.VitalSignsRequestDTO dto) {
+        Intervention intervention = interventionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Intervention introuvable."));
+
+        intervention.setHeartRate(dto.heartRate());
+        intervention.setBloodPressure(dto.bloodPressure());
+        intervention.setSpo2(dto.spo2());
+        intervention.setTemperature(dto.temperature());
+        intervention.setConsciousness(dto.consciousness());
+        if (dto.oxygenPlaced() != null) intervention.setOxygenPlaced(dto.oxygenPlaced());
+        if (dto.ecgDone() != null) intervention.setEcgDone(dto.ecgDone());
+
+        Intervention saved = interventionRepository.save(intervention);
+        return interventionMapper.toResponse(saved);
+    }
+
     @Transactional(readOnly = true)
     public InterventionResponseDTO getInterventionById(UUID id) {
         Intervention intervention = interventionRepository.findById(id)
@@ -137,6 +154,24 @@ public class InterventionService {
     }
 
     @Transactional(readOnly = true)
+    public InterventionResponseDTO getInterventionByAlertIdSecured(UUID alertId, com.wonmally.app.security.CustomUserPrincipal principal) {
+        Intervention intervention = interventionRepository.findByAlertId(alertId)
+                .orElseThrow(() -> new ResourceNotFoundException("Intervention introuvable pour cette alerte."));
+
+        boolean isPrivileged = principal.getAuthorities().stream()
+                .map(org.springframework.security.core.GrantedAuthority::getAuthority)
+                .anyMatch(role -> role.equals("ROLE_ADMIN") || role.equals("ROLE_MEDICAL_CENTER")
+                        || role.equals("ROLE_AMBULANCIER") || role.equals("ROLE_DOCTOR"));
+
+        boolean isOwner = intervention.getAlert().getCitizen().getUser().getId().equals(principal.getUserId());
+
+        if (!isPrivileged && !isOwner) {
+            throw new ResourceNotFoundException("Intervention introuvable pour cette alerte.");
+        }
+
+        return interventionMapper.toResponse(intervention);
+    }
+
     public InterventionResponseDTO getInterventionByAlertId(UUID alertId) {
         Intervention intervention = interventionRepository.findByAlertId(alertId)
                 .orElseThrow(() -> new ResourceNotFoundException("Intervention introuvable pour cette alerte."));
@@ -153,6 +188,25 @@ public class InterventionService {
      * l'ambulancier connecte est actuellement affecte, via son ambulance assignee
      * (Ambulancier.currentAmbulance) - lien precis, pas une approximation par centre medical.
      */
+    @Transactional(readOnly = true)
+    public java.util.List<InterventionResponseDTO> getInterventionsForDoctor(UUID userId) {
+        com.wonmally.app.doctor.entity.Doctor doctor = doctorRepository.findByUserId(userId).orElse(null);
+        if (doctor == null) {
+            return java.util.List.of();
+        }
+        return interventionRepository.findByDoctorId(doctor.getId()).stream()
+                .sorted((a, b) -> {
+                    java.time.LocalDateTime aDate = a.getStartedAt();
+                    java.time.LocalDateTime bDate = b.getStartedAt();
+                    if (aDate == null && bDate == null) return 0;
+                    if (aDate == null) return 1;
+                    if (bDate == null) return -1;
+                    return bDate.compareTo(aDate);
+                })
+                .map(interventionMapper::toResponse)
+                .toList();
+    }
+
     @Transactional(readOnly = true)
     public Optional<InterventionResponseDTO> getActiveInterventionForUser(UUID userId) {
         Ambulancier ambulancier = ambulancierRepository.findByUserId(userId).orElse(null);

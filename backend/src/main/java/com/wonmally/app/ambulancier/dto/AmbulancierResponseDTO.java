@@ -15,5 +15,7 @@ public record AmbulancierResponseDTO(
     String medicalCenterName,
     String matricule,
     Boolean available,
-    String currentStatus
+    String currentStatus,
+    UUID currentAmbulanceId,
+    String currentAmbulanceRegistrationNumber
 ) {}

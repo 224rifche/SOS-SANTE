@@ -16,6 +16,6 @@ export function createStompClient() {
     reconnectDelay: 5000,
     heartbeatIncoming: 4000,
     heartbeatOutgoing: 4000,
-    debug: () => {}, // desactive les logs verbeux en production
+    debug: (msg) => console.log("[STOMP]", msg),
   });
 }

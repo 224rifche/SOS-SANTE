@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -26,8 +27,8 @@ public class UserProfileService {
 
     @Transactional(readOnly = true)
     public UserProfileResponseDTO getCurrentProfile(@NonNull UUID userId) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
+        User user = Objects.requireNonNull(userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable")));
         return userMapper.toProfileResponse(user);
     }
 

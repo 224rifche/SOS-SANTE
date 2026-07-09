@@ -8,4 +8,5 @@ import java.util.UUID;
 
 public interface MedicalNoteRepository extends JpaRepository<MedicalNote, UUID> {
     List<MedicalNote> findByInterventionIdOrderByCreatedAtDesc(UUID interventionId);
+    List<MedicalNote> findByDoctorId(UUID doctorId);
 }

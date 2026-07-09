@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -42,7 +43,7 @@ public class UserAdminService {
             .and(UserSpecification.isEnabled(enabled))
             .and(UserSpecification.search(search));
 
-        return userRepository.findAll(spec, pageable).map(userMapper::toAdminResponse);
+        return userRepository.findAll(spec, Objects.requireNonNull(pageable)).map(userMapper::toAdminResponse);
     }
 
     @Transactional(readOnly = true)
@@ -71,7 +72,7 @@ public class UserAdminService {
             .verified(true)
             .build();
 
-        User saved = userRepository.save(user);
+        User saved = Objects.requireNonNull(userRepository.save(user));
         logCurrentAdminAction("USER_CREATED", saved.getId());
         return userMapper.toAdminResponse(saved);
     }
@@ -137,7 +138,7 @@ public class UserAdminService {
     private Set<Role> resolveRoles(Set<String> roleNames) {
         Set<Role> roles = roleRepository.findByNameIn(roleNames);
         if (roles.size() != roleNames.size()) {
-            Set<String> found = roles.stream().map(Role::getName).collect(Collectors.toSet());
+            Set<String> found = roles.stream().map((@org.springframework.lang.NonNull Role r) -> r.getName()).collect(Collectors.toSet());
             Set<String> missing = roleNames.stream()
                 .filter(name -> !found.contains(name))
                 .collect(Collectors.toSet());

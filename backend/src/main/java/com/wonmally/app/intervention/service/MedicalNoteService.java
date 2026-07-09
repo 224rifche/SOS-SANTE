@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -31,7 +32,7 @@ public class MedicalNoteService {
         Doctor doctor = doctorRepository.findByUserId(doctorUserId)
             .orElseThrow(() -> new ResourceNotFoundException("Profil medecin introuvable"));
 
-        Intervention intervention = interventionRepository.findById(dto.interventionId())
+        Intervention intervention = interventionRepository.findById(Objects.requireNonNull(dto.interventionId()))
             .orElseThrow(() -> new ResourceNotFoundException("Intervention introuvable"));
 
         MedicalNote note = MedicalNote.builder()
@@ -41,7 +42,7 @@ public class MedicalNoteService {
             .observations(dto.observations())
             .build();
 
-        return mapper.toResponse(medicalNoteRepository.save(note));
+        return mapper.toResponse(Objects.requireNonNull(medicalNoteRepository.save(note)));
     }
 
     @Transactional(readOnly = true)

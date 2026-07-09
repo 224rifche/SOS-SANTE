@@ -1,5 +1,6 @@
 package com.wonmally.app.config;
 
+import com.wonmally.app.security.filter.CsrfCookieFilter;
 import com.wonmally.app.security.filter.RateLimitFilter;
 import com.wonmally.app.security.handler.CustomAccessDeniedHandler;
 import com.wonmally.app.security.handler.CustomAuthEntryPoint;
@@ -18,6 +19,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -45,6 +48,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter  jwtAuthFilter;
     private final RateLimitFilter          rateLimitFilter;
+    private final CsrfCookieFilter         csrfCookieFilter;
     private final UserDetailsService       userDetailsService;
     private final CustomAuthEntryPoint     authEntryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
@@ -52,14 +56,23 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+                .ignoringRequestMatchers("/ws/**", "/actuator/**", "/swagger-ui/**", "/v3/api-docs/**"))
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint(authEntryPoint)
                 .accessDeniedHandler(accessDeniedHandler))
+            .headers(headers -> headers
+                .frameOptions(frame -> frame.deny())
+                .httpStrictTransportSecurity(hsts -> hsts
+                    .includeSubDomains(true)
+                    .maxAgeInSeconds(31536000)))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/v1/auth/me").authenticated()
                 .requestMatchers(
                     "/api/v1/auth/**",
                     "/api/v1/dashboard/public-stats",
@@ -71,7 +84,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/admin/**")
                     .hasRole("ADMIN")
                 .requestMatchers("/api/v1/doctors/**")
-                    .hasAnyRole("DOCTOR", "ADMIN")
+                    .hasAnyRole("DOCTOR", "ADMIN", "MEDICAL_CENTER")
                 .requestMatchers("/api/v1/medical-centers/**")
                     .hasAnyRole("MEDICAL_CENTER", "ADMIN")
                 .requestMatchers("/api/v1/ambulanciers/**")
@@ -80,7 +93,8 @@ public class SecurityConfig {
             )
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(rateLimitFilter,   UsernamePasswordAuthenticationFilter.class)
-            .addFilterBefore(jwtAuthFilter,     UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthFilter,     UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(csrfCookieFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }
@@ -113,7 +127,7 @@ public class SecurityConfig {
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of(
-            "Authorization", "Content-Type", "Accept", "X-Requested-With", "Cache-Control"
+            "Authorization", "Content-Type", "Accept", "X-Requested-With", "Cache-Control", "X-XSRF-TOKEN"
         ));
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
